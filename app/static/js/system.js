@@ -396,23 +396,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // 命令执行功能相关代码
     const commandInput = document.getElementById('command-input');
     const executeBtn = document.getElementById('execute-btn');
-    const stopBtn = document.getElementById('stop-btn');
     const commandOutput = document.getElementById('command-output');
     const commandMessage = document.getElementById('command-message');
-    const timeoutRange = document.getElementById('timeout-range');
-    const timeoutValue = document.getElementById('timeout-value');
+    const timeoutSelect = document.getElementById('timeout-select');
     
     // 初始化Socket.IO连接
     const socket = io();
     let isCommandRunning = false;
     
-    // 更新超时显示
-    timeoutRange.addEventListener('input', function() {
-        timeoutValue.textContent = this.value;
-    });
-    
     // 执行命令
     executeBtn.addEventListener('click', function() {
+        if (isCommandRunning) {
+            // 如果命令正在运行，按钮功能变为停止
+            socket.emit('stop_command');
+            return;
+        }
+        
         const command = commandInput.value.trim();
         if (!command) {
             commandMessage.textContent = '请输入命令';
@@ -424,22 +423,15 @@ document.addEventListener('DOMContentLoaded', function() {
         commandMessage.textContent = '正在执行...';
         
         // 更新按钮状态
-        executeBtn.disabled = true;
-        stopBtn.disabled = false;
+        executeBtn.textContent = '停止';
+        executeBtn.classList.add('btn-warning');
         isCommandRunning = true;
         
         // 发送执行命令请求
         socket.emit('execute_command', {
             command: command,
-            timeout: parseInt(timeoutRange.value)
+            timeout: parseInt(timeoutSelect.value)
         });
-    });
-    
-    // 停止命令
-    stopBtn.addEventListener('click', function() {
-        if (isCommandRunning) {
-            socket.emit('stop_command');
-        }
     });
     
     // 监听命令开始执行
@@ -482,14 +474,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 重置命令UI状态
     function resetCommandUI() {
-        executeBtn.disabled = false;
-        stopBtn.disabled = true;
+        executeBtn.textContent = '执行';
+        executeBtn.classList.remove('btn-warning');
         isCommandRunning = false;
     }
     
     // 允许按Enter键执行命令
     commandInput.addEventListener('keyup', function(event) {
-        if (event.key === 'Enter' && !executeBtn.disabled) {
+        if (event.key === 'Enter' && !isCommandRunning) {
             executeBtn.click();
         }
     });

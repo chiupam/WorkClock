@@ -32,15 +32,20 @@
         <div class="card">
             <div class="card-title">命令执行</div>
             <div class="command-input-container">
-                <input type="text" id="command-input" placeholder="输入shell命令" class="command-input">
-                <div class="timeout-container">
-                    <label for="timeout-range">超时时间: <span id="timeout-value">10</span>秒</label>
-                    <input type="range" id="timeout-range" min="1" max="30" value="10" class="timeout-range">
+                <div class="input-with-button">
+                    <input type="text" id="command-input" placeholder="输入shell命令" class="command-input">
+                    <button class="btn" id="execute-btn">执行</button>
                 </div>
-            </div>
-            <div class="button-group">
-                <button class="btn" id="execute-btn">执行</button>
-                <button class="btn btn-warning" id="stop-btn" disabled>停止</button>
+                <div class="timeout-container">
+                    <label for="timeout-select">超时时间:</label>
+                    <select id="timeout-select" class="timeout-select">
+                        <option value="5">5秒</option>
+                        <option value="10" selected>10秒</option>
+                        <option value="15">15秒</option>
+                        <option value="20">20秒</option>
+                        <option value="30">30秒</option>
+                    </select>
+                </div>
             </div>
             
             <div id="command-status" class="status-box">
