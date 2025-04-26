@@ -392,4 +392,105 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(error => {
         console.error('获取系统信息失败:', error);
     });
+
+    // 命令执行功能相关代码
+    const commandInput = document.getElementById('command-input');
+    const executeBtn = document.getElementById('execute-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const commandOutput = document.getElementById('command-output');
+    const commandMessage = document.getElementById('command-message');
+    const timeoutRange = document.getElementById('timeout-range');
+    const timeoutValue = document.getElementById('timeout-value');
+    
+    // 初始化Socket.IO连接
+    const socket = io();
+    let isCommandRunning = false;
+    
+    // 更新超时显示
+    timeoutRange.addEventListener('input', function() {
+        timeoutValue.textContent = this.value;
+    });
+    
+    // 执行命令
+    executeBtn.addEventListener('click', function() {
+        const command = commandInput.value.trim();
+        if (!command) {
+            commandMessage.textContent = '请输入命令';
+            return;
+        }
+        
+        // 重置状态
+        commandOutput.textContent = '';
+        commandMessage.textContent = '正在执行...';
+        
+        // 更新按钮状态
+        executeBtn.disabled = true;
+        stopBtn.disabled = false;
+        isCommandRunning = true;
+        
+        // 发送执行命令请求
+        socket.emit('execute_command', {
+            command: command,
+            timeout: parseInt(timeoutRange.value)
+        });
+    });
+    
+    // 停止命令
+    stopBtn.addEventListener('click', function() {
+        if (isCommandRunning) {
+            socket.emit('stop_command');
+        }
+    });
+    
+    // 监听命令开始执行
+    socket.on('command_started', function(data) {
+        commandMessage.textContent = data.message;
+    });
+    
+    // 监听命令输出
+    socket.on('command_output', function(data) {
+        commandOutput.textContent += data.output;
+        // 自动滚动到底部
+        commandOutput.scrollTop = commandOutput.scrollHeight;
+    });
+    
+    // 监听命令完成
+    socket.on('command_completed', function(data) {
+        commandMessage.textContent = data.message;
+        resetCommandUI();
+    });
+    
+    // 监听命令终止
+    socket.on('command_terminated', function(data) {
+        commandMessage.textContent = data.message;
+        resetCommandUI();
+    });
+    
+    // 监听命令错误
+    socket.on('command_error', function(data) {
+        commandMessage.textContent = data.message;
+        resetCommandUI();
+    });
+    
+    // 连接断开事件
+    socket.on('disconnect', function() {
+        if (isCommandRunning) {
+            commandMessage.textContent = '连接已断开，命令可能已停止执行';
+            resetCommandUI();
+        }
+    });
+    
+    // 重置命令UI状态
+    function resetCommandUI() {
+        executeBtn.disabled = false;
+        stopBtn.disabled = true;
+        isCommandRunning = false;
+    }
+    
+    // 允许按Enter键执行命令
+    commandInput.addEventListener('keyup', function(event) {
+        if (event.key === 'Enter' && !executeBtn.disabled) {
+            executeBtn.click();
+        }
+    });
 }); 

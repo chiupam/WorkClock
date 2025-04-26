@@ -1,134 +1,184 @@
+/* 系统管理页面样式 */
+:root {
+    --primary-color: #3498db;
+    --success-color: #2ecc71;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --light-color: #ecf0f1;
+    --dark-color: #34495e;
+    --gray-color: #95a5a6;
+}
+
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
+
 body {
-    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-    background-color: #f5f5f5;
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f7fa;
     color: #333;
     line-height: 1.6;
 }
+
 .container {
-    max-width: 600px;
-    margin: 20px auto;
+    max-width: 800px;
+    margin: 0 auto;
     padding: 20px;
 }
+
 h1 {
     text-align: center;
-    margin-bottom: 20px;
-    color: #333;
+    margin-bottom: 30px;
+    color: var(--dark-color);
 }
+
 .card {
-    background: #fff;
-    border-radius: 10px;
+    background-color: white;
+    border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
-    margin-bottom: 20px;
-    width: 100%;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-bottom: 25px;
 }
+
 .card-title {
-    font-size: 18px;
+    font-size: 1.5em;
     font-weight: bold;
     margin-bottom: 15px;
-    color: #333;
+    color: var(--dark-color);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
 }
+
+.version-info {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
 .btn {
     display: inline-block;
-    padding: 8px 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
+    padding: 8px 15px;
     margin-right: 10px;
     margin-bottom: 10px;
-    transition: background-color 0.3s;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s, transform 0.1s;
 }
+
 .btn:hover {
-    background-color: #0069d9;
+    background-color: #2980b9;
 }
-.btn-danger {
-    background-color: #dc3545;
+
+.btn:active {
+    transform: translateY(1px);
 }
-.btn-danger:hover {
-    background-color: #c82333;
-}
+
 .btn-success {
-    background-color: #28a745;
+    background-color: var(--success-color);
 }
+
 .btn-success:hover {
-    background-color: #218838;
+    background-color: #27ae60;
 }
+
 .btn-warning {
-    background-color: #ffc107;
-    color: #333;
+    background-color: var(--warning-color);
 }
+
 .btn-warning:hover {
-    background-color: #e0a800;
+    background-color: #e67e22;
 }
+
+.btn-danger {
+    background-color: var(--danger-color);
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.btn:disabled {
+    background-color: var(--gray-color);
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+    background-color: var(--gray-color);
+}
+
 .status-box {
-    margin-top: 20px;
+    margin-top: 15px;
     padding: 15px;
-    border-radius: 5px;
+    border-radius: 4px;
     background-color: #f8f9fa;
-    border-left: 4px solid #6c757d;
-    font-size: 14px;
-    width: 100%;
+    border-left: 4px solid var(--gray-color);
 }
-.info {
-    border-left-color: #17a2b8;
+
+.status-box.info {
+    border-left-color: var(--primary-color);
+    background-color: rgba(52, 152, 219, 0.1);
 }
-.success {
-    border-left-color: #28a745;
+
+.status-box.success {
+    border-left-color: var(--success-color);
+    background-color: rgba(46, 204, 113, 0.1);
 }
-.error {
-    border-left-color: #dc3545;
+
+.status-box.error {
+    border-left-color: var(--danger-color);
+    background-color: rgba(231, 76, 60, 0.1);
 }
+
+.status-box.hidden {
+    display: none;
+}
+
 pre {
     background-color: #f8f9fa;
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 4px;
     overflow-x: auto;
-    font-family: monospace;
     margin-top: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.9em;
+    white-space: pre-wrap;
 }
-.hidden {
-    display: none;
-}
-.version-info {
-    margin-bottom: 10px;
-    font-size: 14px;
-}
+
 .back-link {
     display: block;
     text-align: center;
     margin-top: 20px;
-    color: #007bff;
+    color: var(--primary-color);
     text-decoration: none;
 }
+
 .back-link:hover {
     text-decoration: underline;
 }
+
 .progress-container {
-    width: 100%;
+    margin-top: 15px;
     background-color: #f1f1f1;
-    border-radius: 5px;
-    margin-top: 10px;
-}
-.progress-bar {
-    height: 10px;
-    border-radius: 5px;
-    background-color: #4CAF50;
-    width: 0%;
-    transition: width 0.3s;
+    border-radius: 4px;
+    height: 20px;
+    overflow: hidden;
 }
 
-/* 自定义确认框样式 */
+.progress-bar {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* 模态框样式 */
 .modal {
     position: fixed;
     top: 0;
@@ -151,12 +201,11 @@ pre {
 }
 
 .modal-content {
-    width: 90%;
-    max-width: 400px;
-    background-color: #fff;
-    border-radius: 10px;
+    background-color: white;
+    border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
+    width: 90%;
+    max-width: 500px;
     transform: translateY(-20px);
     transition: transform 0.3s;
 }
@@ -170,28 +219,48 @@ pre {
     border-bottom: 1px solid #eee;
 }
 
-.modal-header h2 {
-    margin: 0;
-    font-size: 18px;
-    color: #333;
-}
-
 .modal-body {
     padding: 20px;
 }
 
-.modal-body p {
-    margin: 0;
-    line-height: 1.5;
-}
-
 .modal-footer {
     padding: 15px 20px;
-    display: flex;
-    justify-content: flex-end;
     border-top: 1px solid #eee;
+    text-align: right;
 }
 
-.modal-footer button {
-    margin-left: 10px;
+/* 命令执行区域样式 */
+.command-input-container {
+    margin-bottom: 15px;
+}
+
+.command-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: monospace;
+    margin-bottom: 10px;
+}
+
+.timeout-container {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.timeout-range {
+    flex: 1;
+    margin-left: 15px;
+    height: 8px;
+}
+
+#command-output {
+    background-color: #1e1e1e;
+    color: #f0f0f0;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
 } 

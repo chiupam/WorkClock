@@ -2,9 +2,9 @@ flask
 flask_sqlalchemy
 flask_login
 flask_sse
-flask_apscheduler
+flask_socketio
 dotenv
 requests
-cryptography
 psutil
-gunicorn
+cryptography
+flask_apscheduler

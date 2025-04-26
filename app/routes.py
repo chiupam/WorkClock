@@ -23,11 +23,15 @@ from app import db
 from app.ciphertext import CookieCipher
 from app.models import PermanentToken, SignLog, Logs, ScheduledTask, TaskLog
 from app.scheduler import setup_scheduled_tasks
+from app.system import get_version, check_update, get_system_info
 
 main = Blueprint('main', __name__)
 
 # 注册 sse blueprint
 main.register_blueprint(sse, url_prefix='/stream')
+
+# 存储活动进程信息
+active_processes = {}
 
 
 def get_cookie_value(name) -> Union[str, bool]:
@@ -1393,359 +1397,152 @@ def update():
 
 
 # 系统管理页面路由
-@main.route('/admin/system', methods=['GET'])
-@admin_required
+@main.route('/system')
 def system_page():
-    """
-    系统管理页面
-    :return: 系统管理页面
-    """
-    try:
-        return render_template('system.html')
-    except Exception as e:
-        return render_template('dashboard.html', error=str(e))
+    """系统管理页面"""
+    return render_template('system.html', version=get_version())
 
 
-# 系统更新相关API
-@main.route('/api/check_update', methods=['POST'])
-@admin_required
-def check_update():
-    """
-    检查系统更新
-    :return: 更新信息
-    """
-    try:
-        # 使用system模块获取版本信息
-        update_info = system.check_update()
+@main.route('/api/system/info')
+def system_info():
+    """获取系统信息"""
+    return jsonify(get_system_info())
+
+
+@main.route('/api/system/check_update')
+def check_system_update():
+    """检查系统更新"""
+    return jsonify(check_update())
+
+
+def register_system_socket(socketio):
+    """注册系统相关的WebSocket事件处理器"""
+    
+    @socketio.on('execute_command')
+    def handle_execute_command(data):
+        """处理执行命令请求"""
+        cmd = data.get('command', '')
+        timeout = int(data.get('timeout', 10))
+        session_id = request.sid
         
-        # 从GitHub获取最新版本信息（可选）
+        if not cmd:
+            emit('command_error', {'message': '命令不能为空'})
+            return
+        
+        # 如果该会话有正在运行的进程，先终止它
+        if session_id in active_processes:
+            try:
+                proc = active_processes[session_id]['process']
+                if proc.poll() is None:  # 进程仍在运行
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            except Exception as e:
+                current_app.logger.error(f"终止进程失败: {str(e)}")
+            finally:
+                active_processes.pop(session_id, None)
+        
         try:
-            response = requests.get("https://api.github.com/repos/chiupam/WorkClock/releases/latest")
-            if response.status_code == 200:
-                current_version = system.get_version()
-                latest_version = response.json().get("tag_name", current_version)
-                changelog = response.json().get("body", "")
-                
-                # 使用system模块中的版本比较逻辑
-                has_update = system.check_update()["has_update"]
-                
-                update_info = {
-                    "current_version": current_version,
-                    "latest_version": latest_version,
-                    "has_update": has_update,
-                    "changelog": changelog
-                }
-            else:
-                # 如果无法获取，使用system模块的默认值
-                pass
-        except:
-            # 如果请求失败，使用system模块的默认值
-            pass
+            # 创建进程，启用新进程组以便后续终止
+            process = subprocess.Popen(
+                cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                preexec_fn=os.setsid
+            )
             
-        return jsonify({
-            "success": True,
-            **update_info
-        })
-    except Exception as e:
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="检查更新", details=f"失败: {str(e)}"
-        )
-        return jsonify({"success": False, "message": f"检查更新失败: {str(e)}"}), 500
-
-
-@main.route('/api/update_system', methods=['POST'])
-@admin_required
-def update_system():
-    """
-    更新系统
-    :return: 更新结果
-    """
-    try:
-        # 调用更新函数
-        update_result = update()
-        if isinstance(update_result, tuple):
-            result = update_result[0].get_json()
-            if result.get("status") == "success":
-                add_operation_log(
-                    user_name="管理员", dep_name="管理员",
-                    operation="系统更新", details="成功"
-                )
-                return jsonify({"success": True, "log": "系统更新成功，将在几秒后重启。"})
-            else:
-                add_operation_log(
-                    user_name="管理员", dep_name="管理员",
-                    operation="系统更新", details=f"失败: {result.get('message')}"
-                )
-                return jsonify({"success": False, "log": result.get("message")})
-        else:
-            result = update_result.get_json()
-            if result.get("status") == "success":
-                add_operation_log(
-                    user_name="管理员", dep_name="管理员",
-                    operation="系统更新", details="成功"
-                )
-                return jsonify({"success": True, "log": "系统更新成功，将在几秒后重启。"})
-            else:
-                add_operation_log(
-                    user_name="管理员", dep_name="管理员",
-                    operation="系统更新", details=f"失败: {result.get('message')}"
-                )
-                return jsonify({"success": False, "log": result.get("message")})
-    except Exception as e:
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="系统更新", details=f"失败: {str(e)}"
-        )
-        return jsonify({"success": False, "log": f"系统更新失败: {str(e)}"}), 500
-
-
-# 数据管理相关API
-@main.route('/api/backup_data', methods=['POST'])
-@admin_required
-def backup_data():
-    """
-    备份数据
-    :return: 备份文件
-    """
-    try:
-        # 创建临时目录
-        app_root = os.getcwd()
-        temp_dir = os.path.join(app_root, 'temp_backup')
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-        os.makedirs(temp_dir)
-        
-        # 备份数据库
-        db_path = os.path.join(app_root, 'app.db')
-        if os.path.exists(db_path):
-            shutil.copy2(db_path, os.path.join(temp_dir, 'app.db'))
-        
-        # 备份配置文件
-        config_path = os.path.join(app_root, 'config.py')
-        if os.path.exists(config_path):
-            shutil.copy2(config_path, os.path.join(temp_dir, 'config.py'))
-        
-        # 创建备份的ZIP文件
-        backup_file = os.path.join(app_root, 'backup.zip')
-        with zipfile.ZipFile(backup_file, 'w') as zipf:
-            for root, _, files in os.walk(temp_dir):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    zipf.write(file_path, os.path.relpath(file_path, temp_dir))
-        
-        # 清理临时目录
-        shutil.rmtree(temp_dir)
-        
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="数据备份", details="成功"
-        )
-        
-        # 返回备份文件
-        return send_file(
-            backup_file,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name=f'workclock-backup-{datetime.now().strftime("%Y%m%d-%H%M%S")}.zip'
-        )
-    except Exception as e:
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="数据备份", details=f"失败: {str(e)}"
-        )
-        return jsonify({"success": False, "message": f"备份失败: {str(e)}"}), 500
-
-
-@main.route('/api/restore_data', methods=['POST'])
-@admin_required
-def restore_data():
-    """
-    恢复数据
-    :return: 恢复结果
-    """
-    try:
-        if 'backup_file' not in request.files:
-            return jsonify({"success": False, "log": "未收到备份文件"}), 400
-        
-        file = request.files['backup_file']
-        if file.filename == '':
-            return jsonify({"success": False, "log": "未选择文件"}), 400
-        
-        # 创建临时目录
-        app_root = os.getcwd()
-        temp_dir = os.path.join(app_root, 'temp_restore')
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-        os.makedirs(temp_dir)
-        
-        # 保存并解压缩文件
-        temp_zip = os.path.join(temp_dir, 'backup.zip')
-        file.save(temp_zip)
-        
-        with zipfile.ZipFile(temp_zip, 'r') as zipf:
-            zipf.extractall(temp_dir)
-        
-        # 恢复数据库和配置
-        db_path = os.path.join(temp_dir, 'app.db')
-        if os.path.exists(db_path):
-            shutil.copy2(db_path, os.path.join(app_root, 'app.db'))
-        
-        config_path = os.path.join(temp_dir, 'config.py')
-        if os.path.exists(config_path):
-            shutil.copy2(config_path, os.path.join(app_root, 'config.py'))
-        
-        # 清理临时目录
-        shutil.rmtree(temp_dir)
-        
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="数据恢复", details="成功"
-        )
-        
-        # 异步重启应用
-        def restart_app():
-            time.sleep(1)  # 等待响应发送
-            try:
-                master_pid = os.getppid()
-                os.kill(master_pid, signal.SIGHUP)
-            except:
+            active_processes[session_id] = {
+                'process': process,
+                'start_time': time.time(),
+                'timeout': timeout
+            }
+            
+            def output_reader():
+                """读取命令输出并发送给客户端"""
                 try:
-                    pids = subprocess.check_output(["pgrep", "gunicorn"]).decode().strip().split("\n")
-                    for pid in pids:
-                        try:
-                            os.kill(int(pid), signal.SIGHUP)
-                        except:
-                            pass
-                except:
-                    os._exit(0)
-        
-        restart_thread = threading.Thread(target=restart_app)
-        restart_thread.daemon = True
-        restart_thread.start()
-        
-        return jsonify({"success": True, "log": "数据恢复成功，应用将重启。"})
-    except Exception as e:
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="数据恢复", details=f"失败: {str(e)}"
-        )
-        return jsonify({"success": False, "log": f"恢复失败: {str(e)}"}), 500
-
-
-# 系统维护相关API
-@main.route('/api/restart_app', methods=['POST'])
-@admin_required
-def restart_app_api():
-    """
-    重启应用
-    :return: 重启结果
-    """
-    try:
-        # 异步重启应用
-        def restart_app():
-            time.sleep(1)  # 等待响应发送
+                    for line in process.stdout:
+                        if session_id in active_processes:
+                            emit('command_output', {'output': line})
+                        else:
+                            break
+                        
+                    # 进程结束后的处理
+                    if session_id in active_processes:
+                        return_code = process.wait()
+                        emit('command_completed', {
+                            'return_code': return_code,
+                            'message': f'命令执行完成，返回代码: {return_code}'
+                        })
+                        active_processes.pop(session_id, None)
+                except Exception as e:
+                    current_app.logger.error(f"读取命令输出失败: {str(e)}")
+                    emit('command_error', {'message': f'读取命令输出失败: {str(e)}'})
+                    if session_id in active_processes:
+                        active_processes.pop(session_id, None)
+            
+            def timeout_monitor():
+                """监控命令执行超时"""
+                process_info = active_processes.get(session_id)
+                if not process_info:
+                    return
+                    
+                start_time = process_info['start_time']
+                timeout_seconds = process_info['timeout']
+                
+                time.sleep(timeout_seconds)
+                
+                # 检查进程是否仍在运行且仍在active_processes中
+                if session_id in active_processes and process.poll() is None:
+                    try:
+                        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                        emit('command_terminated', {'message': f'命令已超时({timeout_seconds}秒)，已终止执行'})
+                    except Exception as e:
+                        current_app.logger.error(f"终止超时进程失败: {str(e)}")
+                    finally:
+                        active_processes.pop(session_id, None)
+            
+            # 启动输出读取线程
+            reader_thread = threading.Thread(target=output_reader)
+            reader_thread.daemon = True
+            reader_thread.start()
+            
+            # 启动超时监控线程
+            timeout_thread = threading.Thread(target=timeout_monitor)
+            timeout_thread.daemon = True
+            timeout_thread.start()
+            
+            emit('command_started', {'message': f'命令已开始执行，超时时间: {timeout}秒'})
+            
+        except Exception as e:
+            current_app.logger.error(f"执行命令失败: {str(e)}")
+            emit('command_error', {'message': f'执行命令失败: {str(e)}'})
+    
+    @socketio.on('stop_command')
+    def handle_stop_command():
+        """处理停止命令请求"""
+        session_id = request.sid
+        if session_id in active_processes:
             try:
-                master_pid = os.getppid()
-                os.kill(master_pid, signal.SIGHUP)
-            except:
-                try:
-                    pids = subprocess.check_output(["pgrep", "gunicorn"]).decode().strip().split("\n")
-                    for pid in pids:
-                        try:
-                            os.kill(int(pid), signal.SIGHUP)
-                        except:
-                            pass
-                except:
-                    os._exit(0)
-        
-        restart_thread = threading.Thread(target=restart_app)
-        restart_thread.daemon = True
-        restart_thread.start()
-        
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="重启应用", details="成功"
-        )
-        
-        return jsonify({"success": True, "message": "应用重启指令已发送，请等待几秒后刷新页面。"})
-    except Exception as e:
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="重启应用", details=f"失败: {str(e)}"
-        )
-        return jsonify({"success": False, "error": f"重启失败: {str(e)}"}), 500
-
-
-@main.route('/api/reset_system', methods=['POST'])
-@admin_required
-def reset_system():
-    """
-    重置系统
-    :return: 重置结果
-    """
-    try:
-        # 重置数据库（简单的方法是删除数据库文件，让应用重启时自动创建）
-        app_root = os.getcwd()
-        db_path = os.path.join(app_root, 'app.db')
-        if os.path.exists(db_path):
-            os.remove(db_path)
-        
-        # 可能你想保留配置文件，但重置数据库
-        
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="重置系统", details="成功"
-        )
-        
-        # 异步重启应用
-        def restart_app():
-            time.sleep(1)  # 等待响应发送
+                proc = active_processes[session_id]['process']
+                if proc.poll() is None:  # 进程仍在运行
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                    emit('command_terminated', {'message': '命令已手动终止'})
+                active_processes.pop(session_id, None)
+            except Exception as e:
+                current_app.logger.error(f"手动终止进程失败: {str(e)}")
+                emit('command_error', {'message': f'终止命令失败: {str(e)}'})
+    
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        """处理客户端断开连接"""
+        session_id = request.sid
+        if session_id in active_processes:
             try:
-                master_pid = os.getppid()
-                os.kill(master_pid, signal.SIGHUP)
-            except:
-                try:
-                    pids = subprocess.check_output(["pgrep", "gunicorn"]).decode().strip().split("\n")
-                    for pid in pids:
-                        try:
-                            os.kill(int(pid), signal.SIGHUP)
-                        except:
-                            pass
-                except:
-                    os._exit(0)
-        
-        restart_thread = threading.Thread(target=restart_app)
-        restart_thread.daemon = True
-        restart_thread.start()
-        
-        return jsonify({"success": True, "message": "系统已重置，应用将重启。"})
-    except Exception as e:
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="重置系统", details=f"失败: {str(e)}"
-        )
-        return jsonify({"success": False, "error": f"重置失败: {str(e)}"}), 500
-
-
-@main.route('/api/system_info', methods=['GET'])
-@admin_required
-def get_system_info():
-    """
-    获取系统信息，包括当前版本号
-    :return: 系统信息
-    """
-    try:
-        # 使用system模块获取系统信息
-        info = system.get_system_info()
-        
-        return jsonify({
-            "success": True,
-            "info": info
-        })
-    except Exception as e:
-        add_operation_log(
-            user_name="管理员", dep_name="管理员",
-            operation="获取系统信息", details=f"失败: {str(e)}"
-        )
-        return jsonify({"success": False, "message": f"获取系统信息失败: {str(e)}"}), 500
+                proc = active_processes[session_id]['process']
+                if proc.poll() is None:  # 进程仍在运行
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            except Exception as e:
+                current_app.logger.error(f"断开连接时终止进程失败: {str(e)}")
+            finally:
+                active_processes.pop(session_id, None)

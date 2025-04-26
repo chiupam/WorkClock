@@ -1,6 +1,6 @@
 import logging
 
-from app import create_app
+from app import create_app, socketio
 
 # 设置 Werkzeug 的日志级别为 INFO，记录请求和操作信息
 logging.getLogger('werkzeug').setLevel(logging.INFO)
@@ -16,7 +16,8 @@ try:
     app = create_app()
     
     if __name__ == '__main__':
-        app.run(
+        socketio.run(
+            app,
             debug=True, 
             host='0.0.0.0', 
             port=9051

@@ -3,7 +3,9 @@
 .gitignore
 
 # Docker
+Dockerfile
 Dockerfile.base
+.dockerignore
 .dockerignore.base
 
 # Python
@@ -31,7 +33,11 @@ venv/
 .venv/
 
 # 应用特定
+instance/
+.env
 .env.example
+*.db
+*.db-journal
 
 # 临时文件和日志
 *.log
@@ -48,44 +54,8 @@ htmlcov/
 *.sublime-project
 *.sublime-workspace
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
-
-# Docker
-.docker/
-docker-compose.yml
-docker-compose.override.yml
-Dockerfile*
-.dockerignore
-
-# 测试和文档
-tests/
-docs/
-*.md
-!README.md
-
-# 敏感数据和日志
-*.log
-.env*
-!.env.example
-config.local.py
-*.pem
-*.key
-*.crt
-secrets/
-credentials/
-*.db
-*.sqlite3
-instance/
-
-# 其他
-.coverage
-htmlcov/
-.pytest_cache/
-.tox/
-.mypy_cache/
-node_modules/ 
+# 应用代码 - 基础镜像不需要
+app/
+run.py
+gunicorn.conf.py
+*.md 
