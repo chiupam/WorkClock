@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超级打卡</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/super.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>超级打卡</h2>
+            <div>
+                <button onclick="window.location.href='/admin'" class="btn secondary">首页</button>
+                <button onclick="window.location.href='/admin/super'" class="btn secondary">返回</button>
+                <button onclick="window.location.href='/admin/logout'" class="btn secondary">退出</button>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="department-list">
+                {% for dep in departments %}
+                <div class="department-item">
+                    <div>
+                        <strong>{{ dep.depname }}</strong>
+                        <!-- <span class="department-count">({{ dep.depid }})</span> -->
+                    </div>
+                    <button onclick="getDepartmentDetails('{{ dep.depid }}')" class="btn">进入</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/super.js') }}"></script>
+</body>
+</html> 

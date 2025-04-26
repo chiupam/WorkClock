@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>部门打卡</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>部门打卡</h2>
+            <div>
+                <button onclick="window.location.href='/admin/super'" class="btn secondary">返回</button>
+                <button onclick="window.location.href='/admin/logout'" class="btn secondary">退出</button>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="user-list">
+                {% for user in users %}
+                <div class="user-item">
+                    <div>
+                        <strong>{{ user.username }}</strong>
+                        <span class="user-info">({{ user.userid }})</span>
+                    </div>
+                    <form action="/admin/user" method="POST" style="display: none;" id="form-{{ user.userid }}">
+                        <input type="hidden" name="userId" value="{{ user.userid }}">
+                        <input type="hidden" name="username" value="{{ user.username }}">
+                        <input type="hidden" name="depId" value="{{ dep_id }}">
+                        <input type="hidden" name="depName" value="{{ user.depname|default('') }}">
+                        <input type="hidden" name="position" value="{{ user.position|default('') }}">
+                    </form>
+                    <button onclick="submitForm('{{ user.userid }}')" class="btn">查询</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dep.js') }}"></script>
+</body>
+</html> 

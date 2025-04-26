@@ -1,0 +1,10 @@
+flask
+flask_sqlalchemy
+flask_login
+flask_sse
+flask_apscheduler
+dotenv
+requests
+cryptography
+psutil
+gunicorn

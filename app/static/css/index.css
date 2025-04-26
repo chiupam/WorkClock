@@ -1,0 +1,782 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.container {
+    width: 90%;
+    max-width: 400px;
+    padding: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    position: relative;
+    margin: 0 auto;
+}
+
+h2 {
+    color: white;
+    margin: 0 0 30px 0;
+}
+
+.user-info {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.user-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 16px;
+    color: #333;
+}
+
+.divider {
+    margin: 0 8px;
+    color: #999;
+}
+
+.department-info {
+    font-size: 14px;
+    color: #666;
+}
+
+.id-info {
+    color: #999;
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+.attendance-list {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.attendance-list h3 {
+    color: #333;
+    margin: 0 0 20px 0;
+    font-size: 18px;
+}
+
+.attendance-record {
+    background: white;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.record-content {
+    display: flex;
+    align-items: flex-start;
+    padding: 0 10px;
+}
+
+.standard-time {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.clock-type-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
+    background-color: #1890ff;
+    border-radius: 8px;
+}
+
+.clock-type-badge svg {
+    color: white;
+    stroke: currentColor;
+    width: 18px;
+    height: 18px;
+}
+
+.record-details {
+    flex-grow: 1;
+}
+
+.type-and-info {
+    display: flex;
+    align-items: center;
+}
+
+.info-group {
+    flex-grow: 1;
+}
+
+.time-info, .location-info {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    color: #666;
+}
+
+.time-icon, .location-icon {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.time-icon svg {
+    color: #666;
+}
+
+.location-icon svg {
+    color: #FFA500;
+}
+
+.sign-button {
+    width: 200px;
+    height: 200px;
+    padding: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    margin: 40px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+}
+
+.sign-button::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.sign-button::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    animation: pulse 2s infinite 0.5s;
+}
+
+.sign-button .time {
+    font-size: 32px;
+    margin-top: 10px;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+.sign-button[style*="display: none"] + .attendance-list {
+    margin-top: 0;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header h2 {
+    margin: 0;
+}
+
+.logout-button {
+    padding: 8px 16px;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.logout-button:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Alert 样式 */
+.alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.alert-box {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.alert-success {
+    border-top: 4px solid #52c41a;
+}
+
+.alert-error {
+    border-top: 4px solid #ff4d4f;
+}
+
+.alert-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.alert-success .alert-icon {
+    color: #52c41a;
+}
+
+.alert-error .alert-icon {
+    color: #ff4d4f;
+}
+
+.alert-message {
+    margin: 10px 0;
+    color: #333;
+}
+
+.alert-button {
+    margin-top: 15px;
+    padding: 8px 24px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.alert-success .alert-button {
+    background-color: #52c41a;
+}
+
+.alert-success .alert-button:hover {
+    background-color: #389e0d;
+}
+
+.alert-error .alert-button {
+    background-color: #ff4d4f;
+}
+
+.alert-error .alert-button:hover {
+    background-color: #cf1322;
+}
+
+/* 加载指示器样式 */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2196F3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    margin-top: 15px;
+    color: #2196F3;
+    font-size: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 加载指示器样式 */
+.loading-box {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.loading-box .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #1890ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-box .loading-text {
+    color: #1890ff;
+    font-size: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 添加考勤统计相关样式 */
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.stats-button {
+    padding: 8px 16px;
+    background-color: #1890ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.stats-button:hover {
+    background-color: #40a9ff;
+}
+
+.attendance-stats {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stats-header h3 {
+    color: #333;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.nav-button {
+    padding: 8px 16px;
+    background-color: #1890ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    min-width: 80px;
+}
+
+.nav-button:hover {
+    background-color: #40a9ff;
+}
+
+.stats-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stats-table th,
+.stats-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.stats-table th {
+    background-color: #fafafa;
+    font-weight: 600;
+    color: #333;
+}
+
+.rest-day {
+    color: #999;
+    font-style: italic;
+}
+
+.holiday-name {
+    color: #999;
+    font-style: italic;
+}
+
+.leave-day {
+    color: #1a80ed;
+    font-style: italic;
+}
+
+.stats-table td svg {
+    vertical-align: middle;
+}
+
+/* 月份选择器样式 */
+.month-select {
+    padding: 6px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s;
+    outline: none;
+    min-width: 80px;
+    text-align: center;
+}
+
+.month-select:hover {
+    border-color: #40a9ff;
+}
+
+.month-select:focus {
+    border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stats-header .header-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* 待打卡状态样式 */
+.pending-sign {
+    color: #722ed1;
+    font-style: italic;
+}
+
+/* 统一下拉框选项样式 */
+.month-select option {
+    background-color: white;
+    color: #333;
+}
+
+/* 日历样式 */
+.calendar-day {
+    min-height: 60px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.day-status {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+}
+
+.day-status svg {
+    width: 16px;
+    height: 16px;
+}
+
+.stats-table td {
+    vertical-align: top;
+    width: 14.28%;
+    border: 1px solid #e8e8e8;
+    padding: 5px;
+}
+
+.stats-table th {
+    padding: 10px;
+    text-align: center;
+    background-color: #f5f5f5;
+}
+
+/* 统计摘要样式 */
+.stats-summary {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-title {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.summary-note {
+    font-size: 12px;
+    color: #999;
+    font-weight: normal;
+    margin-left: 8px;
+}
+
+.summary-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.summary-item {
+    flex: 1;
+    min-width: calc(50% - 8px);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.item-label {
+    color: #666;
+    font-size: 14px;
+}
+
+.item-value {
+    color: #1890ff;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* 此处添加模态框相关样式 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.close {
+    font-size: 24px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+    text-align: left;
+}
+
+.modal-body p {
+    margin-top: 0;
+    color: #555;
+    text-align: left;
+}
+
+.schedule-options {
+    margin: 20px 0;
+}
+
+.schedule-option {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.schedule-option input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+}
+
+.schedule-option label {
+    font-size: 16px;
+    color: #333;
+}
+
+.schedule-note {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f8f8f8;
+    border-left: 3px solid #1890ff;
+    color: #666;
+    font-size: 14px;
+    text-align: left;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.save-button, .cancel-button {
+    padding: 8px 20px;
+    border-radius: 4px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.save-button {
+    background-color: #1890ff;
+    color: white;
+    margin-left: 10px;
+}
+
+.save-button:hover {
+    background-color: #40a9ff;
+}
+
+.cancel-button {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.cancel-button:hover {
+    background-color: #e0e0e0;
+}
+
+/* 定时打卡时间显示样式 */
+.schedule-times {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #e9ecef;
+    text-align: left;
+}
+
+.time-title {
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: #1890ff;
+    text-align: left;
+}
+
+.time-slots {
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.time-label {
+    font-weight: 500;
+    color: #555;
+    width: 50px;
+    display: inline-block;
+}
+
+.time-values {
+    color: #1890ff;
+}
+
+.limit-warning {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #fff2f0;
+    border: 1px solid #ffccc7;
+    border-radius: 4px;
+    color: #ff4d4f;
+    text-align: left;
+}
+
+.limit-warning p {
+    margin: 0;
+    text-align: left;
+}
