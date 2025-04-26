@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, jsonify, request, current_app, session, redirect, url_for, make_response, \
     Response, send_file
 from flask_sse import sse
+from flask_socketio import emit
 from functools import wraps
 from typing import Union, Any, Callable
 from werkzeug import Response
@@ -1458,49 +1459,61 @@ def register_system_socket(socketio):
                 'timeout': timeout
             }
             
+            # 获取应用上下文，以便在线程中使用
+            app = current_app._get_current_object()
+            
             def output_reader():
                 """读取命令输出并发送给客户端"""
                 try:
-                    for line in process.stdout:
-                        if session_id in active_processes:
-                            emit('command_output', {'output': line})
-                        else:
-                            break
+                    # 在线程中使用应用上下文
+                    with app.app_context():
+                        for line in process.stdout:
+                            if session_id in active_processes:
+                                emit('command_output', {'output': line})
+                            else:
+                                break
                         
-                    # 进程结束后的处理
-                    if session_id in active_processes:
-                        return_code = process.wait()
-                        emit('command_completed', {
-                            'return_code': return_code,
-                            'message': f'命令执行完成，返回代码: {return_code}'
-                        })
-                        active_processes.pop(session_id, None)
+                        # 进程结束后的处理
+                        if session_id in active_processes:
+                            return_code = process.wait()
+                            emit('command_completed', {
+                                'return_code': return_code,
+                                'message': f'命令执行完成，返回代码: {return_code}'
+                            })
+                            active_processes.pop(session_id, None)
                 except Exception as e:
-                    current_app.logger.error(f"读取命令输出失败: {str(e)}")
-                    emit('command_error', {'message': f'读取命令输出失败: {str(e)}'})
-                    if session_id in active_processes:
-                        active_processes.pop(session_id, None)
+                    with app.app_context():
+                        app.logger.error(f"读取命令输出失败: {str(e)}")
+                        emit('command_error', {'message': f'读取命令输出失败: {str(e)}'})
+                        if session_id in active_processes:
+                            active_processes.pop(session_id, None)
             
             def timeout_monitor():
                 """监控命令执行超时"""
-                process_info = active_processes.get(session_id)
-                if not process_info:
-                    return
-                    
-                start_time = process_info['start_time']
-                timeout_seconds = process_info['timeout']
-                
-                time.sleep(timeout_seconds)
-                
-                # 检查进程是否仍在运行且仍在active_processes中
-                if session_id in active_processes and process.poll() is None:
-                    try:
-                        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-                        emit('command_terminated', {'message': f'命令已超时({timeout_seconds}秒)，已终止执行'})
-                    except Exception as e:
-                        current_app.logger.error(f"终止超时进程失败: {str(e)}")
-                    finally:
-                        active_processes.pop(session_id, None)
+                try:
+                    # 在线程中使用应用上下文
+                    with app.app_context():
+                        process_info = active_processes.get(session_id)
+                        if not process_info:
+                            return
+                            
+                        start_time = process_info['start_time']
+                        timeout_seconds = process_info['timeout']
+                        
+                        time.sleep(timeout_seconds)
+                        
+                        # 检查进程是否仍在运行且仍在active_processes中
+                        if session_id in active_processes and process.poll() is None:
+                            try:
+                                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                                emit('command_terminated', {'message': f'命令已超时({timeout_seconds}秒)，已终止执行'})
+                            except Exception as e:
+                                app.logger.error(f"终止超时进程失败: {str(e)}")
+                            finally:
+                                active_processes.pop(session_id, None)
+                except Exception as e:
+                    with app.app_context():
+                        app.logger.error(f"超时监控失败: {str(e)}")
             
             # 启动输出读取线程
             reader_thread = threading.Thread(target=output_reader)
