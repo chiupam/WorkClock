@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 页面加载时获取当前版本
-    fetch('/api/system_info', {
+    fetch('/api/system/info', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'

@@ -1425,6 +1425,7 @@ def register_system_socket(socketio):
         cmd = data.get('command', '')
         timeout = int(data.get('timeout', 10))
         session_id = request.sid
+        namespace = request.namespace
         
         if not cmd:
             emit('command_error', {'message': '命令不能为空'})
@@ -1469,22 +1470,26 @@ def register_system_socket(socketio):
                     with app.app_context():
                         for line in process.stdout:
                             if session_id in active_processes:
-                                emit('command_output', {'output': line})
+                                # 使用socketio.emit而不是全局emit函数
+                                socketio.emit('command_output', {'output': line}, room=session_id, namespace=namespace)
                             else:
                                 break
                         
                         # 进程结束后的处理
                         if session_id in active_processes:
                             return_code = process.wait()
-                            emit('command_completed', {
+                            socketio.emit('command_completed', {
                                 'return_code': return_code,
                                 'message': f'命令执行完成，返回代码: {return_code}'
-                            })
+                            }, room=session_id, namespace=namespace)
                             active_processes.pop(session_id, None)
                 except Exception as e:
                     with app.app_context():
                         app.logger.error(f"读取命令输出失败: {str(e)}")
-                        emit('command_error', {'message': f'读取命令输出失败: {str(e)}'})
+                        socketio.emit('command_error', 
+                                    {'message': f'读取命令输出失败: {str(e)}'}, 
+                                    room=session_id, 
+                                    namespace=namespace)
                         if session_id in active_processes:
                             active_processes.pop(session_id, None)
             
@@ -1506,7 +1511,10 @@ def register_system_socket(socketio):
                         if session_id in active_processes and process.poll() is None:
                             try:
                                 os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-                                emit('command_terminated', {'message': f'命令已超时({timeout_seconds}秒)，已终止执行'})
+                                socketio.emit('command_terminated', 
+                                            {'message': f'命令已超时({timeout_seconds}秒)，已终止执行'}, 
+                                            room=session_id, 
+                                            namespace=namespace)
                             except Exception as e:
                                 app.logger.error(f"终止超时进程失败: {str(e)}")
                             finally:
