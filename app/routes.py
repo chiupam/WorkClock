@@ -9,15 +9,22 @@ import string
 import subprocess
 import threading
 import time
+import traceback
 import zipfile
+import json
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, jsonify, request, current_app, session, redirect, url_for, make_response, \
-    Response, send_file
+    Response, send_file, stream_with_context
 from flask_sse import sse
 from flask_socketio import emit
 from functools import wraps
 from typing import Union, Any, Callable
 from werkzeug import Response
+import queue
+import select
+import uuid
+import fcntl
+from collections import defaultdict
 
 import app.system as system
 from app import db
@@ -33,6 +40,39 @@ main.register_blueprint(sse, url_prefix='/stream')
 
 # 存储活动进程信息
 active_processes = {}
+
+# 命令存储
+running_commands = {}
+command_outputs = defaultdict(queue.Queue)
+command_expire_time = {}
+
+
+def terminate_process(process):
+    """尝试多种方式终止进程，兼容Docker容器环境"""
+    try:
+        if process.poll() is not None:  # 进程已退出
+            return True
+            
+        # 首先尝试正常终止
+        process.terminate()
+        
+        # 给进程一点时间来正常退出
+        for _ in range(10):  # 尝试10次，每次等待0.1秒
+            if process.poll() is not None:  # 进程已退出
+                return True
+            time.sleep(0.1)
+            
+        # 如果进程仍在运行，发送SIGKILL信号
+        if process.poll() is None:
+            try:
+                os.kill(process.pid, signal.SIGKILL)
+            except Exception as e:
+                current_app.logger.error(f"SIGKILL终止进程失败: {str(e)}")
+                
+        return process.poll() is not None
+    except Exception as e:
+        current_app.logger.error(f"终止进程失败: {str(e)}\n{traceback.format_exc()}")
+        return False
 
 
 def get_cookie_value(name) -> Union[str, bool]:
@@ -1407,7 +1447,48 @@ def system_page():
 @main.route('/api/system/info')
 def system_info():
     """获取系统信息"""
-    return jsonify(get_system_info())
+    try:
+        # 获取系统信息
+        sys_info = get_system_info()
+        
+        # 获取环境变量信息
+        env_info = {
+            'PATH': os.environ.get('PATH', '未设置'),
+            'PYTHONPATH': os.environ.get('PYTHONPATH', '未设置'),
+            'USER': os.environ.get('USER', '未设置'),
+            'HOME': os.environ.get('HOME', '未设置'),
+            'PWD': os.getcwd(),
+            'is_docker': os.path.exists('/.dockerenv')
+        }
+        
+        # 测试基本命令可用性
+        cmd_results = {}
+        for cmd in ['ls', 'pwd', 'cat', 'echo', 'ps', 'grep']:
+            try:
+                proc = subprocess.run(['which', cmd], capture_output=True, text=True, timeout=2)
+                cmd_results[cmd] = {
+                    'path': proc.stdout.strip() if proc.returncode == 0 else None,
+                    'available': proc.returncode == 0
+                }
+            except Exception as e:
+                cmd_results[cmd] = {
+                    'path': None,
+                    'available': False,
+                    'error': str(e)
+                }
+        
+        return jsonify({
+            'success': True,
+            'info': sys_info,
+            'env': env_info,
+            'commands': cmd_results
+        })
+    except Exception as e:
+        current_app.logger.error(f"获取系统信息失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 
 @main.route('/api/system/check_update')
@@ -1416,154 +1497,233 @@ def check_system_update():
     return jsonify(check_update())
 
 
-def register_system_socket(socketio):
-    """注册系统相关的WebSocket事件处理器"""
-    
-    @socketio.on('execute_command')
-    def handle_execute_command(data):
-        """处理执行命令请求"""
-        cmd = data.get('command', '')
+@main.route('/execute_command', methods=['POST'])
+def execute_command():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "无效的请求数据"}), 400
+        
+        command = data.get('command', '').strip()
         timeout = int(data.get('timeout', 10))
-        session_id = request.sid
-        namespace = request.namespace
         
-        if not cmd:
-            emit('command_error', {'message': '命令不能为空'})
-            return
+        if not command:
+            return jsonify({"status": "error", "message": "命令不能为空"}), 400
         
-        # 如果该会话有正在运行的进程，先终止它
-        if session_id in active_processes:
+        # 生成唯一命令ID
+        command_id = str(uuid.uuid4())
+        
+        # 设置命令过期时间（30分钟后）
+        command_expire_time[command_id] = datetime.now() + timedelta(minutes=30)
+        
+        # 创建线程运行命令
+        thread = threading.Thread(
+            target=run_command,
+            args=(command_id, command, timeout)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        current_app.logger.info(f"启动命令执行: {command} (ID: {command_id}, 超时: {timeout}秒)")
+        
+        return jsonify({
+            "status": "started",
+            "command_id": command_id,
+            "message": "命令已开始执行"
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"执行命令时出错: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({
+            "status": "error",
+            "message": f"服务器错误: {str(e)}"
+        }), 500
+
+
+def run_command(command_id, command, timeout):
+    queue = command_outputs[command_id]
+    
+    try:
+        # 创建子进程执行命令，不使用setsid
+        process = subprocess.Popen(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+            universal_newlines=True
+        )
+        
+        # 记录进程对象
+        running_commands[command_id] = process
+        pid = process.pid
+        
+        current_app.logger.info(f"命令已启动 - ID: {command_id}, PID: {pid}, 命令: {command}")
+        
+        # 读取输出线程
+        def reader():
             try:
-                proc = active_processes[session_id]['process']
-                if proc.poll() is None:  # 进程仍在运行
-                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                for line in iter(process.stdout.readline, ''):
+                    queue.put({"status": "output", "lines": [line]})
             except Exception as e:
-                current_app.logger.error(f"终止进程失败: {str(e)}")
+                current_app.logger.error(f"读取命令输出时出错: {str(e)}\n{traceback.format_exc()}")
+                queue.put({"status": "error", "message": f"读取输出错误: {str(e)}"})
             finally:
-                active_processes.pop(session_id, None)
+                if process.stdout:
+                    process.stdout.close()
         
+        # 启动读取线程
+        read_thread = threading.Thread(target=reader)
+        read_thread.daemon = True
+        read_thread.start()
+        
+        # 等待命令完成或超时
         try:
-            # 创建进程，启用新进程组以便后续终止
-            process = subprocess.Popen(
-                cmd,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-                preexec_fn=os.setsid
-            )
-            
-            active_processes[session_id] = {
-                'process': process,
-                'start_time': time.time(),
-                'timeout': timeout
-            }
-            
-            # 获取应用上下文，以便在线程中使用
-            app = current_app._get_current_object()
-            
-            def output_reader():
-                """读取命令输出并发送给客户端"""
-                try:
-                    # 在线程中使用应用上下文
-                    with app.app_context():
-                        for line in process.stdout:
-                            if session_id in active_processes:
-                                # 使用socketio.emit而不是全局emit函数
-                                socketio.emit('command_output', {'output': line}, room=session_id, namespace=namespace)
-                            else:
-                                break
-                        
-                        # 进程结束后的处理
-                        if session_id in active_processes:
-                            return_code = process.wait()
-                            socketio.emit('command_completed', {
-                                'return_code': return_code,
-                                'message': f'命令执行完成，返回代码: {return_code}'
-                            }, room=session_id, namespace=namespace)
-                            active_processes.pop(session_id, None)
-                except Exception as e:
-                    with app.app_context():
-                        app.logger.error(f"读取命令输出失败: {str(e)}")
-                        socketio.emit('command_error', 
-                                    {'message': f'读取命令输出失败: {str(e)}'}, 
-                                    room=session_id, 
-                                    namespace=namespace)
-                        if session_id in active_processes:
-                            active_processes.pop(session_id, None)
-            
-            def timeout_monitor():
-                """监控命令执行超时"""
-                try:
-                    # 在线程中使用应用上下文
-                    with app.app_context():
-                        process_info = active_processes.get(session_id)
-                        if not process_info:
-                            return
-                            
-                        start_time = process_info['start_time']
-                        timeout_seconds = process_info['timeout']
-                        
-                        time.sleep(timeout_seconds)
-                        
-                        # 检查进程是否仍在运行且仍在active_processes中
-                        if session_id in active_processes and process.poll() is None:
-                            try:
-                                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-                                socketio.emit('command_terminated', 
-                                            {'message': f'命令已超时({timeout_seconds}秒)，已终止执行'}, 
-                                            room=session_id, 
-                                            namespace=namespace)
-                            except Exception as e:
-                                app.logger.error(f"终止超时进程失败: {str(e)}")
-                            finally:
-                                active_processes.pop(session_id, None)
-                except Exception as e:
-                    with app.app_context():
-                        app.logger.error(f"超时监控失败: {str(e)}")
-            
-            # 启动输出读取线程
-            reader_thread = threading.Thread(target=output_reader)
-            reader_thread.daemon = True
-            reader_thread.start()
-            
-            # 启动超时监控线程
-            timeout_thread = threading.Thread(target=timeout_monitor)
-            timeout_thread.daemon = True
-            timeout_thread.start()
-            
-            emit('command_started', {'message': f'命令已开始执行，超时时间: {timeout}秒'})
-            
-        except Exception as e:
-            current_app.logger.error(f"执行命令失败: {str(e)}")
-            emit('command_error', {'message': f'执行命令失败: {str(e)}'})
+            return_code = process.wait(timeout=timeout)
+            queue.put({"status": "completed", "return_code": return_code})
+            current_app.logger.info(f"命令已完成 - ID: {command_id}, 返回码: {return_code}")
+        except subprocess.TimeoutExpired:
+            # 超时处理
+            terminate_process(process)
+            queue.put({"status": "terminated", "message": f"命令执行超时({timeout}秒)"})
+            current_app.logger.warning(f"命令已超时 - ID: {command_id}, 超时: {timeout}秒")
+        
+    except Exception as e:
+        current_app.logger.error(f"运行命令时出错: {str(e)}\n{traceback.format_exc()}")
+        queue.put({"status": "error", "message": f"执行命令出错: {str(e)}"})
     
-    @socketio.on('stop_command')
-    def handle_stop_command():
-        """处理停止命令请求"""
-        session_id = request.sid
-        if session_id in active_processes:
-            try:
-                proc = active_processes[session_id]['process']
-                if proc.poll() is None:  # 进程仍在运行
-                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-                    emit('command_terminated', {'message': '命令已手动终止'})
-                active_processes.pop(session_id, None)
-            except Exception as e:
-                current_app.logger.error(f"手动终止进程失败: {str(e)}")
-                emit('command_error', {'message': f'终止命令失败: {str(e)}'})
+    finally:
+        # 确保进程已经终止
+        if command_id in running_commands:
+            process = running_commands[command_id]
+            if process and process.poll() is None:
+                try:
+                    terminate_process(process)
+                except Exception as e:
+                    current_app.logger.error(f"终止进程时出错: {str(e)}\n{traceback.format_exc()}")
+
+
+def cleanup_expired_commands():
+    now = datetime.now()
+    expired_ids = []
     
-    @socketio.on('disconnect')
-    def handle_disconnect():
-        """处理客户端断开连接"""
-        session_id = request.sid
-        if session_id in active_processes:
+    for cmd_id, expire_time in list(command_expire_time.items()):
+        if now > expire_time:
+            expired_ids.append(cmd_id)
+    
+    for cmd_id in expired_ids:
+        if cmd_id in running_commands:
             try:
-                proc = active_processes[session_id]['process']
-                if proc.poll() is None:  # 进程仍在运行
-                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                proc = running_commands[cmd_id]
+                if proc.poll() is None:
+                    terminate_process(proc)
             except Exception as e:
-                current_app.logger.error(f"断开连接时终止进程失败: {str(e)}")
-            finally:
-                active_processes.pop(session_id, None)
+                current_app.logger.error(f"清理过期命令时出错: {str(e)}")
+        
+        # 清理资源
+        if cmd_id in running_commands:
+            del running_commands[cmd_id]
+        if cmd_id in command_outputs:
+            del command_outputs[cmd_id]
+        if cmd_id in command_expire_time:
+            del command_expire_time[cmd_id]
+        
+        current_app.logger.info(f"已清理过期命令: {cmd_id}")
+
+
+# 定期运行清理任务（每分钟检查一次）
+def start_cleanup_thread():
+    def cleanup_loop():
+        while True:
+            try:
+                cleanup_expired_commands()
+            except Exception as e:
+                current_app.logger.error(f"清理线程出错: {str(e)}")
+            time.sleep(60)  # 每分钟检查一次
+    
+    cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True)
+    cleanup_thread.start()
+    current_app.logger.info("已启动命令清理线程")
+
+
+# 不在模块级别直接调用，而是将其注册为应用初始化后的回调函数
+def init_cleanup_thread(app):
+    """初始化清理线程，在应用上下文中调用"""
+    with app.app_context():
+        start_cleanup_thread()
+
+
+@main.route('/stop_command/<command_id>', methods=['POST'])
+def stop_command(command_id):
+    try:
+        if command_id in running_commands:
+            process = running_commands[command_id]
+            
+            if process and process.poll() is None:
+                terminate_process(process)
+                command_outputs[command_id].put({
+                    "status": "terminated",
+                    "message": "命令已手动终止"
+                })
+                current_app.logger.info(f"命令被手动终止 - ID: {command_id}")
+                return jsonify({"status": "success", "message": "命令已终止"})
+            else:
+                return jsonify({"status": "error", "message": "命令已经完成"})
+        else:
+            return jsonify({"status": "error", "message": "找不到指定的命令"})
+    
+    except Exception as e:
+        current_app.logger.error(f"停止命令时出错: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"status": "error", "message": f"停止命令出错: {str(e)}"}), 500
+
+
+@main.route('/command_output/<command_id>')
+def command_output(command_id):
+    """使用Server-Sent Events流式传输命令输出"""
+    
+    if command_id not in command_outputs:
+        return jsonify({"status": "error", "message": "找不到指定的命令"}), 404
+    
+    def generate():
+        queue = command_outputs[command_id]
+        last_ping = time.time()
+        
+        while True:
+            try:
+                # 每隔10秒发送一个ping以保持连接活跃
+                current_time = time.time()
+                if current_time - last_ping > 10:
+                    yield f"data: {json.dumps({'status': 'ping'})}\n\n"
+                    last_ping = current_time
+                
+                # 获取队列中的数据，最多等待1秒
+                try:
+                    data = queue.get(timeout=1)
+                    yield f"data: {json.dumps(data)}\n\n"
+                    
+                    # 如果是终止类消息，结束流
+                    if data['status'] in ['completed', 'terminated', 'error']:
+                        break
+                except queue.Empty:
+                    # 检查进程是否仍在运行
+                    if command_id in running_commands:
+                        process = running_commands[command_id]
+                        if process.poll() is not None:
+                            # 进程已结束，但没有收到完成消息
+                            return_code = process.poll()
+                            yield f"data: {json.dumps({'status': 'completed', 'return_code': return_code})}\n\n"
+                            break
+                    else:
+                        # 没有找到进程，可能已经结束
+                        yield f"data: {json.dumps({'status': 'error', 'message': '命令已结束或不存在'})}\n\n"
+                        break
+            
+            except Exception as e:
+                current_app.logger.error(f"生成命令输出时出错: {str(e)}")
+                yield f"data: {json.dumps({'status': 'error', 'message': f'输出流错误: {str(e)}'})}\n\n"
+                break
+    
+    response = Response(stream_with_context(generate()), mimetype="text/event-stream")
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'  # 禁用Nginx缓冲
+    return response

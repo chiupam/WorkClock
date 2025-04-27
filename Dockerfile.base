@@ -25,11 +25,9 @@ RUN apk add --no-cache tzdata musl-dev libffi-dev linux-headers && \
     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     pip install --no-cache-dir /wheels/* && \
     rm -rf /wheels && \
-    adduser -D appuser && \
     mkdir -p instance && \
     chmod 777 instance && \
     mkdir -p /app/repo /app/temp_extract && \
-    chown appuser:appuser /app/repo /app/temp_extract && \
     chmod 755 /app/repo /app/temp_extract
 
 # 这是一个基础镜像，不包含应用代码

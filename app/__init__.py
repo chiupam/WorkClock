@@ -45,16 +45,17 @@ def create_app(config_class=Config):
         except Exception as e:
             app.logger.warning(f"创建数据库表时出现警告 (可能表已存在): {str(e)}")
     
-    from app.routes import main, register_system_socket
+    from app.routes import main
     app.register_blueprint(main)
     app.register_blueprint(sse, url_prefix='/stream')
-    
-    # 注册WebSocket处理器
-    register_system_socket(socketio)
     
     # 初始化APScheduler
     from app.scheduler import init_scheduler
     init_scheduler(app)
+    
+    # 初始化命令清理线程
+    from app.routes import init_cleanup_thread
+    init_cleanup_thread(app)
     
     @app.after_request
     def add_header(response):

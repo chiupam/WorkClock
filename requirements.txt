@@ -8,3 +8,4 @@ requests
 psutil
 cryptography
 flask_apscheduler
+gunicorn

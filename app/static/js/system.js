@@ -393,96 +393,202 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('获取系统信息失败:', error);
     });
 
-    // 命令执行功能相关代码
-    const commandInput = document.getElementById('command-input');
-    const executeBtn = document.getElementById('execute-btn');
-    const commandOutput = document.getElementById('command-output');
-    const commandMessage = document.getElementById('command-message');
-    const timeoutSelect = document.getElementById('timeout-select');
-    
-    // 初始化Socket.IO连接
-    const socket = io();
-    let isCommandRunning = false;
-    
-    // 执行命令
-    executeBtn.addEventListener('click', function() {
-        if (isCommandRunning) {
-            // 如果命令正在运行，按钮功能变为停止
-            socket.emit('stop_command');
-            return;
-        }
+    // 系统环境信息按钮
+    document.getElementById('system-env-btn').addEventListener('click', function() {
+        const statusBox = document.getElementById('update-status');
+        const messageEl = document.getElementById('update-message');
+        const logEl = document.getElementById('update-log');
         
-        const command = commandInput.value.trim();
-        if (!command) {
-            commandMessage.textContent = '请输入命令';
-            return;
-        }
+        statusBox.classList.remove('hidden');
+        statusBox.classList.add('info');
+        messageEl.textContent = '正在获取系统环境信息...';
+        logEl.textContent = '';
         
-        // 重置状态
-        commandOutput.textContent = '';
-        commandMessage.textContent = '正在执行...';
-        
-        // 更新按钮状态
-        executeBtn.textContent = '停止';
-        executeBtn.classList.add('btn-warning');
-        isCommandRunning = true;
-        
-        // 发送执行命令请求
-        socket.emit('execute_command', {
-            command: command,
-            timeout: parseInt(timeoutSelect.value)
+        fetch('/api/system/info', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            statusBox.classList.remove('info');
+            statusBox.classList.add('success');
+            messageEl.textContent = '系统环境信息';
+            
+            // 格式化环境变量
+            let envInfo = '环境变量:\n';
+            for (const [key, value] of Object.entries(data.env || {})) {
+                envInfo += `${key}: ${value}\n`;
+            }
+            
+            // 格式化命令可用性
+            let cmdInfo = '\n命令可用性:\n';
+            for (const [cmd, info] of Object.entries(data.commands || {})) {
+                cmdInfo += `${cmd}: ${info.available ? '可用' + (info.path ? ` (${info.path})` : '') : '不可用'}\n`;
+            }
+            
+            // 设置日志内容
+            logEl.textContent = envInfo + cmdInfo;
+        })
+        .catch(error => {
+            statusBox.classList.remove('info');
+            statusBox.classList.add('error');
+            messageEl.textContent = '获取系统环境信息失败';
+            logEl.textContent = error.toString();
         });
     });
-    
-    // 监听命令开始执行
-    socket.on('command_started', function(data) {
-        commandMessage.textContent = data.message;
-    });
-    
-    // 监听命令输出
-    socket.on('command_output', function(data) {
-        commandOutput.textContent += data.output;
-        // 自动滚动到底部
-        commandOutput.scrollTop = commandOutput.scrollHeight;
-    });
-    
-    // 监听命令完成
-    socket.on('command_completed', function(data) {
-        commandMessage.textContent = data.message;
-        resetCommandUI();
-    });
-    
-    // 监听命令终止
-    socket.on('command_terminated', function(data) {
-        commandMessage.textContent = data.message;
-        resetCommandUI();
-    });
-    
-    // 监听命令错误
-    socket.on('command_error', function(data) {
-        commandMessage.textContent = data.message;
-        resetCommandUI();
-    });
-    
-    // 连接断开事件
-    socket.on('disconnect', function() {
-        if (isCommandRunning) {
-            commandMessage.textContent = '连接已断开，命令可能已停止执行';
-            resetCommandUI();
+
+    // 命令执行相关
+    let commandEventSource = null;
+    let activeCommandId = null;
+
+    function executeCommand() {
+        const commandInput = document.getElementById('commandInput');
+        const command = commandInput.value.trim();
+        const timeout = document.getElementById('commandTimeout').value;
+        const outputArea = document.getElementById('commandOutput');
+        
+        if (!command) {
+            showToast('请输入要执行的命令', 'warning');
+            return;
         }
-    });
-    
-    // 重置命令UI状态
-    function resetCommandUI() {
-        executeBtn.textContent = '执行';
-        executeBtn.classList.remove('btn-warning');
-        isCommandRunning = false;
+        
+        // 禁用输入和按钮
+        commandInput.disabled = true;
+        document.getElementById('executeBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        
+        // 清空输出区域
+        outputArea.innerHTML = `<div class="command-header">执行命令: ${command}</div>`;
+        outputArea.classList.add('active');
+        
+        // 发送命令执行请求
+        fetch('/execute_command', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                command: command,
+                timeout: timeout
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'started') {
+                activeCommandId = data.command_id;
+                
+                // 关闭之前的事件源
+                if (commandEventSource) {
+                    commandEventSource.close();
+                }
+                
+                // 建立SSE连接获取命令输出
+                commandEventSource = new EventSource(`/command_output/${data.command_id}`);
+                
+                // 处理输出
+                commandEventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    updateCommandOutput(data);
+                    
+                    // 如果命令已完成、被终止或出错，关闭事件源
+                    if (['completed', 'terminated', 'error'].includes(data.status)) {
+                        resetCommandUI();
+                    }
+                };
+                
+                // 处理错误
+                commandEventSource.onerror = function() {
+                    showToast('命令输出流连接中断', 'error');
+                    resetCommandUI();
+                };
+            } else {
+                showToast(`执行命令失败: ${data.message}`, 'error');
+                resetCommandUI();
+            }
+        })
+        .catch(error => {
+            showToast(`发送命令请求错误: ${error}`, 'error');
+            resetCommandUI();
+        });
     }
+
+    function stopCommand() {
+        if (!activeCommandId) return;
+        
+        fetch(`/stop_command/${activeCommandId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast('命令已停止', 'info');
+            } else {
+                showToast(`停止命令失败: ${data.message}`, 'warning');
+            }
+        })
+        .catch(error => {
+            showToast(`停止命令请求错误: ${error}`, 'error');
+        });
+    }
+
+    function updateCommandOutput(data) {
+        const outputArea = document.getElementById('commandOutput');
+        
+        if (data.status === 'output' && data.lines) {
+            for (const line of data.lines) {
+                const div = document.createElement('div');
+                div.textContent = line;
+                outputArea.appendChild(div);
+            }
+        } else if (data.status === 'completed') {
+            const div = document.createElement('div');
+            div.className = 'command-footer';
+            div.textContent = `命令已完成，返回码: ${data.return_code}`;
+            outputArea.appendChild(div);
+        } else if (data.status === 'terminated') {
+            const div = document.createElement('div');
+            div.className = 'command-footer terminated';
+            div.textContent = data.message || '命令已终止';
+            outputArea.appendChild(div);
+        } else if (data.status === 'error') {
+            const div = document.createElement('div');
+            div.className = 'command-footer error';
+            div.textContent = data.message || '命令执行出错';
+            outputArea.appendChild(div);
+        }
+        
+        // 滚动到底部
+        outputArea.scrollTop = outputArea.scrollHeight;
+    }
+
+    function resetCommandUI() {
+        // 关闭事件源
+        if (commandEventSource) {
+            commandEventSource.close();
+            commandEventSource = null;
+        }
+        
+        // 重置命令ID
+        activeCommandId = null;
+        
+        // 重新启用输入和按钮
+        document.getElementById('commandInput').disabled = false;
+        document.getElementById('executeBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+    }
+
+    // 命令执行事件绑定
+    document.getElementById('executeBtn').addEventListener('click', executeCommand);
+    document.getElementById('stopBtn').addEventListener('click', stopCommand);
+    document.getElementById('stopBtn').disabled = true;
     
-    // 允许按Enter键执行命令
-    commandInput.addEventListener('keyup', function(event) {
-        if (event.key === 'Enter' && !isCommandRunning) {
-            executeBtn.click();
+    // 监听Enter键提交命令
+    document.getElementById('commandInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            executeCommand();
         }
     });
 }); 

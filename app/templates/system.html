@@ -1,85 +1,90 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>系统管理 - WorkClock</title>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/system.css') }}">
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>系统管理</h1>
+        <h1 class="mb-4">系统管理</h1>
         
-        <div class="card">
-            <div class="card-title">系统更新</div>
-            <div class="version-info">当前版本: <span id="current-version">{{ version }}</span></div>
-            <div class="button-group">
-                <button class="btn" id="check-update-btn">检查更新</button>
-                <button class="btn btn-success" id="update-btn">更新系统</button>
+        <!-- 系统更新部分 -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">系统更新</h5>
             </div>
-            
-            <div id="update-status" class="status-box hidden">
-                <div id="update-message"></div>
-                <div class="progress-container" id="progress-container">
-                    <div class="progress-bar" id="progress-bar"></div>
-                </div>
-                <pre id="update-log"></pre>
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="card-title">命令执行</div>
-            <div class="command-input-container">
-                <div class="input-with-button">
-                    <input type="text" id="command-input" placeholder="输入shell命令" class="command-input">
-                    <button class="btn" id="execute-btn">执行</button>
-                </div>
-                <div class="timeout-container">
-                    <label for="timeout-select">超时时间:</label>
-                    <select id="timeout-select" class="timeout-select">
-                        <option value="5">5秒</option>
-                        <option value="10" selected>10秒</option>
-                        <option value="15">15秒</option>
-                        <option value="20">20秒</option>
-                        <option value="30">30秒</option>
-                    </select>
+            <div class="card-body">
+                <div class="d-flex gap-2">
+                    <button id="checkUpdateBtn" class="btn btn-outline-primary">检查更新</button>
+                    <button id="updateSystemBtn" class="btn btn-success">更新系统</button>
                 </div>
             </div>
-            
-            <div id="command-status" class="status-box">
-                <div id="command-message">准备就绪</div>
-                <pre id="command-output"></pre>
+        </div>
+        
+        <!-- 命令执行部分 -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">命令执行</h5>
+            </div>
+            <div class="card-body">
+                <div class="command-section">
+                    <div class="command-container">
+                        <div class="command-input-group">
+                            <input type="text" id="commandInput" placeholder="输入要执行的命令..." class="form-control">
+                            <select id="commandTimeout" class="form-select" style="width: 100px;">
+                                <option value="5">5 秒</option>
+                                <option value="10" selected>10 秒</option>
+                                <option value="15">15 秒</option>
+                                <option value="30">30 秒</option>
+                                <option value="60">60 秒</option>
+                                <option value="120">120 秒</option>
+                            </select>
+                            <button id="executeBtn" class="execute-btn">执行</button>
+                            <button id="stopBtn" class="stop-btn" disabled>停止</button>
+                        </div>
+                        <div id="commandOutput" class="command-output-container"></div>
+                        <div class="d-flex justify-content-end mt-2">
+                            <button id="clearOutputBtn" class="btn btn-sm btn-secondary">清空输出</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div class="card">
-            <div class="card-title">数据管理</div>
-            <button class="btn" id="backup-btn">备份数据</button>
-            <button class="btn btn-warning" id="restore-btn">恢复数据</button>
-            <input type="file" id="backup-file" accept=".zip" style="display: none;">
-            
-            <div id="backup-status" class="status-box hidden">
-                <div id="backup-message"></div>
-                <pre id="backup-log"></pre>
+        <!-- 数据管理部分 -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">数据管理</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2">
+                    <button id="backupDataBtn" class="btn btn-outline-primary">备份数据</button>
+                    <button id="restoreDataBtn" class="btn btn-warning">恢复数据</button>
+                </div>
             </div>
         </div>
         
-        <div class="card">
-            <div class="card-title">系统维护</div>
-            <button class="btn" id="restart-btn">重启应用</button>
-            <button class="btn btn-danger" id="reset-btn">重置系统</button>
-            
-            <div id="maintenance-status" class="status-box hidden">
-                <div id="maintenance-message"></div>
-                <pre id="maintenance-log"></pre>
+        <!-- 系统维护部分 -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">系统维护</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2">
+                    <button id="restartAppBtn" class="btn btn-warning">重启应用</button>
+                    <button id="rebootSystemBtn" class="btn btn-danger">重启系统</button>
+                </div>
             </div>
         </div>
-        
-        <a href="/dashboard" class="back-link">返回仪表盘</a>
     </div>
-
+    
+    <!-- 消息提示框 -->
+    <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;"></div>
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/system.js') }}"></script>
 </body>
-</html> 
+</html>
