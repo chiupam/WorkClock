@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 检查更新按钮
-    document.getElementById('check-update-btn').addEventListener('click', function() {
+    document.getElementById('checkUpdateBtn').addEventListener('click', function() {
         const statusBox = document.getElementById('update-status');
         const messageEl = document.getElementById('update-message');
         const logEl = document.getElementById('update-log');
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
         messageEl.textContent = '正在检查更新...';
         logEl.textContent = '';
         
-        fetch('/api/check_update', {
+        fetch('/api/system/check_update', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 更新系统按钮
-    document.getElementById('update-btn').addEventListener('click', function() {
+    document.getElementById('updateSystemBtn').addEventListener('click', function() {
         // 使用自定义确认框替代原生confirm
         showCustomConfirm('确定要更新系统吗？更新过程中请勿关闭页面。', function() {
             // 确认后的操作

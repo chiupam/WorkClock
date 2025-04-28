@@ -55,11 +55,17 @@ def _fetch_github_version():
     # 检查缓存是否有效
     now = time.time()
     if _version_cache["version"] is not None and now - _version_cache["timestamp"] < _version_cache["cache_ttl"]:
-        return _version_cache["version"]
+        # 确保版本号格式正确，避免返回 "unknown" 等无效值
+        version = _version_cache["version"]
+        if version and (version.startswith('v') or all(c.isdigit() or c == '.' for c in version)):
+            return version
+        else:
+            # 缓存了无效版本，重置缓存
+            _version_cache["version"] = None
     
     # 首先从环境变量读取
     env_version = _get_version_from_env()
-    if env_version:
+    if env_version and (env_version.startswith('v') or all(c.isdigit() or c == '.' for c in env_version)):
         _version_cache["version"] = env_version
         _version_cache["timestamp"] = now
         return env_version
@@ -67,7 +73,7 @@ def _fetch_github_version():
     # 无法从环境变量读取，使用缓存的GitHub数据
     if _github_cache["data"] is not None and now - _github_cache["timestamp"] < _github_cache["cache_ttl"]:
         latest_version = _github_cache["data"].get("tag_name")
-        if latest_version:
+        if latest_version and (latest_version.startswith('v') or all(c.isdigit() or c == '.' for c in latest_version)):
             _version_cache["version"] = latest_version
             _version_cache["timestamp"] = now
             return latest_version
@@ -85,7 +91,7 @@ def _fetch_github_version():
             _github_cache["timestamp"] = now
             
             latest_version = data.get("tag_name")
-            if latest_version:
+            if latest_version and (latest_version.startswith('v') or all(c.isdigit() or c == '.' for c in latest_version)):
                 # 更新版本缓存
                 _version_cache["version"] = latest_version
                 _version_cache["timestamp"] = now
@@ -124,15 +130,24 @@ def get_version():
     获取当前版本
     :return: 版本号
     """
-    version = _fetch_github_version()
-    
-    # 如果版本是通过环境变量获取的，在后台更新GitHub数据
-    if version == _get_version_from_env():
-        now = time.time()
-        if _github_cache["data"] is None or now - _github_cache["timestamp"] > _github_cache["cache_ttl"]:
-            _executor.submit(_background_fetch_github_data)
-    
-    return version
+    try:
+        version = _fetch_github_version()
+        
+        # 如果版本是通过环境变量获取的，在后台更新GitHub数据
+        if version == _get_version_from_env():
+            now = time.time()
+            if _github_cache["data"] is None or now - _github_cache["timestamp"] > _github_cache["cache_ttl"]:
+                _executor.submit(_background_fetch_github_data)
+        
+        # 再次验证版本格式是否正确
+        if not version or not (version.startswith('v') or all(c.isdigit() or c == '.' for c in version)):
+            logger.warning(f"获取到的版本号格式不正确: {version}，使用默认版本v0.0.0")
+            return "v0.0.0"
+        
+        return version
+    except Exception as e:
+        logger.error(f"获取版本号出错: {str(e)}")
+        return "v0.0.0"  # 发生异常时返回默认版本
 
 # 提供VERSION常量以向后兼容
 VERSION = get_version()
@@ -253,8 +268,15 @@ def check_update():
         # 移除v前缀
         if version.startswith('v'):
             version = version[1:]
-        # 分割成数字列表
-        return [int(x) for x in version.split('.')]
+        # 分割成数字列表，非数字部分自动跳过
+        parts = []
+        for x in version.split('.'):
+            try:
+                parts.append(int(x))
+            except ValueError:
+                # 非数字部分替换为0
+                parts.append(0)
+        return parts if parts else [0, 0, 0]  # 确保至少返回[0,0,0]
     
     current_parts = parse_version(current_version)
     latest_parts = parse_version(latest_version)

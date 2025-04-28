@@ -21,6 +21,16 @@
                     <button id="checkUpdateBtn" class="btn btn-outline-primary">检查更新</button>
                     <button id="updateSystemBtn" class="btn btn-success">更新系统</button>
                 </div>
+                <!-- 更新状态显示区域 -->
+                <div id="update-status" class="mt-3 hidden">
+                    <div id="update-message" class="alert"></div>
+                    <div id="update-log" class="mt-2 p-2 bg-light rounded" style="white-space: pre-wrap;"></div>
+                    <div id="progress-container" class="mt-2" style="display: none;">
+                        <div class="progress">
+                            <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         

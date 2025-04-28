@@ -1,9 +1,10 @@
-name: Docker Base Image CI/CD
+name: Base Image CI/CD
 
 on:
   push:
     branches: [ main ]
     paths:
+      - '.github/workflows/docker-publish.yml'
       - 'Dockerfile.base'
       - '.dockerignore.base'
   workflow_dispatch:  # 允许手动触发

@@ -9,6 +9,7 @@ on:
         default: ''
   push:
     paths:
+      - '.github/workflows/docker-publish.yml'
       - 'app/**'
       - 'config.py'
       - 'database.py'

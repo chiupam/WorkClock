@@ -1292,114 +1292,115 @@ def update():
         # 获取应用根目录
         app_root = os.getcwd()  # 在Docker中这通常是/app
         
+        # 设置日志对象用于收集详细日志
+        log_messages = []
+        def add_log(msg):
+            log_messages.append(msg)
+            logging.info(msg)
+        
         # 使用GitHub API直接下载ZIP归档，而不是使用git命令
         repo_dir = os.path.join(app_root, 'repo')
         zip_url = "https://github.com/chiupam/WorkClock/archive/refs/heads/main.zip"
         
         # 下载ZIP文件
-        response = requests.get(zip_url)
-        if response.status_code != 200:
-            return jsonify({"status": "error", "message": f"下载失败，状态码: {response.status_code}"}), 500
-        
-        # 不要删除目录，而是确保目录存在
-        # 如果目录不存在，则尝试创建它
-        if not os.path.exists(repo_dir):
-            try:
-                os.makedirs(repo_dir, exist_ok=True)
-            except PermissionError:
-                return jsonify({"status": "error", "message": f"权限不足，无法创建目录: {repo_dir}"}), 500
-            except Exception as e:
-                return jsonify({"status": "error", "message": f"创建目录失败: {str(e)}"}), 500
-        
-        # 验证目录权限
-        if not os.access(repo_dir, os.W_OK):
-            return jsonify({"status": "error", "message": f"没有对目录'{repo_dir}'的写入权限"}), 500
-        
-        # 清空目录而不是删除它
+        add_log("正在从GitHub下载最新代码...")
         try:
-            for item in os.listdir(repo_dir):
-                item_path = os.path.join(repo_dir, item)
-                if os.path.isfile(item_path):
-                    os.remove(item_path)
-                elif os.path.isdir(item_path):
-                    shutil.rmtree(item_path)
-        except PermissionError:
-            return jsonify({"status": "error", "message": f"权限不足，无法清空目录: {repo_dir}"}), 500
+            response = requests.get(zip_url, timeout=10)
+            if response.status_code != 200:
+                error_msg = f"下载失败，状态码: {response.status_code}"
+                add_log(error_msg)
+                return jsonify({"success": False, "log": "\n".join(log_messages), "message": error_msg})
         except Exception as e:
-            return jsonify({"status": "error", "message": f"清空目录失败: {str(e)}"}), 500
+            error_msg = f"下载失败: {str(e)}"
+            add_log(error_msg)
+            return jsonify({"success": False, "log": "\n".join(log_messages), "message": error_msg})
         
-        # 同样处理临时目录
-        temp_dir = os.path.join(app_root, 'temp_extract')
-        if not os.path.exists(temp_dir):
-            try:
-                os.makedirs(temp_dir, exist_ok=True)
-            except PermissionError:
-                return jsonify({"status": "error", "message": f"权限不足，无法创建临时目录: {temp_dir}"}), 500
-            except Exception as e:
-                return jsonify({"status": "error", "message": f"创建临时目录失败: {str(e)}"}), 500
+        add_log("代码下载完成，准备解压...")
         
-        # 验证临时目录权限
-        if not os.access(temp_dir, os.W_OK):
-            return jsonify({"status": "error", "message": f"没有对目录'{temp_dir}'的写入权限"}), 500
-        
-        # 清空临时目录而不是删除它
+        # 处理目录
         try:
+            # 确保临时目录存在
+            temp_dir = os.path.join(app_root, 'temp_extract')
+            if not os.path.exists(temp_dir):
+                os.makedirs(temp_dir, exist_ok=True)
+            
+            # 确保repo目录存在
+            if not os.path.exists(repo_dir):
+                os.makedirs(repo_dir, exist_ok=True)
+            
+            # 清空临时目录
             for item in os.listdir(temp_dir):
                 item_path = os.path.join(temp_dir, item)
                 if os.path.isfile(item_path):
                     os.remove(item_path)
                 elif os.path.isdir(item_path):
                     shutil.rmtree(item_path)
-        except PermissionError:
-            return jsonify({"status": "error", "message": f"权限不足，无法清空临时目录: {temp_dir}"}), 500
+            
+            # 清空repo目录
+            for item in os.listdir(repo_dir):
+                item_path = os.path.join(repo_dir, item)
+                if os.path.isfile(item_path):
+                    os.remove(item_path)
+                elif os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
         except Exception as e:
-            return jsonify({"status": "error", "message": f"清空临时目录失败: {str(e)}"}), 500
+            error_msg = f"准备目录失败: {str(e)}"
+            add_log(error_msg)
+            return jsonify({"success": False, "log": "\n".join(log_messages), "message": error_msg})
         
         # 解压文件
         try:
             z = zipfile.ZipFile(io.BytesIO(response.content))
             z.extractall(temp_dir)
-        except PermissionError:
-            return jsonify({"status": "error", "message": f"权限不足，无法解压文件到: {temp_dir}"}), 500
+            add_log("文件解压完成")
         except Exception as e:
-            return jsonify({"status": "error", "message": f"解压失败: {str(e)}"}), 500
+            error_msg = f"解压失败: {str(e)}"
+            add_log(error_msg)
+            return jsonify({"success": False, "log": "\n".join(log_messages), "message": error_msg})
         
-        # 将解压的WorkClock-main目录中的文件复制到repo目录
+        # 检查解压后的目录
         extracted_dir = os.path.join(temp_dir, 'WorkClock-main')
         if not os.path.exists(extracted_dir):
-            return jsonify({"status": "error", "message": f"解压后未找到主目录: {extracted_dir}"}), 500
-            
+            error_msg = f"解压后未找到主目录: {extracted_dir}"
+            add_log(error_msg)
+            return jsonify({"success": False, "log": "\n".join(log_messages), "message": error_msg})
+        
+        # 复制文件
         try:
-            # 复制WorkClock-main中的文件到repo目录
+            add_log("开始复制文件...")
+            # 复制到repo目录
             for item in os.listdir(extracted_dir):
                 s = os.path.join(extracted_dir, item)
                 d = os.path.join(repo_dir, item)
-                if os.path.isdir(s):
-                    shutil.copytree(s, d)
-                else:
-                    shutil.copy2(s, d)
-        except PermissionError:
-            return jsonify({"status": "error", "message": f"权限不足，无法复制文件到: {repo_dir}"}), 500
-        except Exception as e:
-            return jsonify({"status": "error", "message": f"复制文件失败: {str(e)}"}), 500
-            
-        # 尝试将repo目录中的文件复制到app根目录
-        try:            
-            # 将repo目录中的文件复制到app根目录
-            for item in os.listdir(repo_dir):
-                s = os.path.join(repo_dir, item)
-                d = os.path.join(app_root, item)
                 if os.path.isdir(s):
                     if os.path.exists(d):
                         shutil.rmtree(d)
                     shutil.copytree(s, d)
                 else:
                     shutil.copy2(s, d)
-        except PermissionError:
-            return jsonify({"status": "error", "message": f"权限不足，无法复制文件到应用根目录"}), 500
+            add_log("文件复制到repo目录完成")
+            
+            # 复制到app目录
+            for item in os.listdir(repo_dir):
+                s = os.path.join(repo_dir, item)
+                d = os.path.join(app_root, item)
+                if item in ['.git', '.github', 'repo', 'temp_extract', 'instance']:
+                    continue
+                if os.path.isdir(s):
+                    if os.path.exists(d):
+                        shutil.rmtree(d)
+                    shutil.copytree(s, d)
+                else:
+                    if os.path.exists(d):
+                        os.remove(d)
+                    shutil.copy2(s, d)
         except Exception as e:
-            return jsonify({"status": "error", "message": f"复制文件到应用根目录失败: {str(e)}"}), 500
-                    
+            error_msg = f"复制文件失败: {str(e)}"
+            add_log(error_msg)
+            return jsonify({"success": False, "log": "\n".join(log_messages), "message": error_msg})
+        
+        add_log("更新完成，准备重启应用...")
+        
         # 异步执行重启，防止响应被中断
         def restart_app():
             try:
@@ -1410,7 +1411,9 @@ def update():
                 
                 # 向Gunicorn主进程发送SIGHUP信号，触发优雅重启
                 os.kill(master_pid, signal.SIGHUP)
+                logging.info(f"已向主进程 {master_pid} 发送重启信号")
             except Exception as e:
+                logging.error(f"通过SIGHUP重启失败: {str(e)}")
                 # 如果上面方法失败，尝试更激进的方式
                 try:
                     # 找到所有gunicorn进程
@@ -1418,11 +1421,16 @@ def update():
                     # 向所有进程发送HUP信号
                     for pid in pids:
                         try:
-                            os.kill(int(pid), signal.SIGHUP)
-                        except:
-                            pass
-                except:
+                            if pid.strip():
+                                pid_int = int(pid.strip())
+                                os.kill(pid_int, signal.SIGHUP)
+                                logging.info(f"已向进程 {pid_int} 发送重启信号")
+                        except Exception as e:
+                            logging.error(f"向进程 {pid} 发送信号失败: {str(e)}")
+                except Exception as e:
+                    logging.error(f"通过pgrep重启失败: {str(e)}")
                     # 如果所有方法都失败，则直接退出（依赖Docker的restart策略）
+                    logging.warning("尝试通过exit(0)触发Docker重启")
                     os._exit(0)
         
         # 在单独的线程中执行重启
@@ -1431,10 +1439,18 @@ def update():
         restart_thread.daemon = True
         restart_thread.start()
         
-        return jsonify({"status": "success", "message": "仓库已更新，应用将重启"})
+        return jsonify({
+            "success": True, 
+            "log": "\n".join(log_messages) + "\n更新完成，应用即将重启...",
+            "message": "更新成功，应用即将重启"
+        })
     except Exception as e:
         logging.error(f"更新失败: {str(e)}", exc_info=True)  # 添加详细日志
-        return jsonify({"status": "error", "message": f"更新失败: {str(e)}"}), 500
+        return jsonify({
+            "success": False, 
+            "log": f"更新过程中发生错误: {str(e)}\n{traceback.format_exc()}",
+            "message": f"更新失败: {str(e)}"
+        })
 
 
 # 系统管理页面路由
@@ -1491,10 +1507,18 @@ def system_info():
         })
 
 
-@main.route('/api/system/check_update')
+@main.route('/api/system/check_update', methods=['POST'])
+@admin_required
 def check_system_update():
     """检查系统更新"""
     return jsonify(check_update())
+
+
+@main.route('/api/update_system', methods=['POST'])
+@admin_required
+def update_system():
+    # 复用原有 update 逻辑
+    return update()
 
 
 @main.route('/execute_command', methods=['POST'])
