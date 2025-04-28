@@ -165,13 +165,24 @@ tr:hover {
 .task-content.active {
     display: block;
 }
-
-.bool-true {
+/* 
+.bool-true, .bool-True, .bool-1 {
     color: #52c41a;
 }
 
-.bool-false {
+.bool-false, .bool-False, .bool-0 {
     color: #ff4d4f;
+} */
+
+/* 启用状态样式 */
+.status-True, .status-true, .status-1 {
+    color: #52c41a;
+    font-weight: bold;
+}
+
+.status-False, .status-false, .status-0 {
+    color: #ff4d4f;
+    font-weight: bold;
 }
 
 /* 任务摘要样式 */

@@ -283,7 +283,45 @@ def scheduled_sign(user_id, dep_id, user_name, dep_name):
             task_type = "morning" if hour < 12 else "afternoon"
             task_time = f"{hour:02d}:{minute:02d}"
             
-            # 记录任务开始执行
+            # 检查今天是否是工作日
+            if not check_working_day(user_id):
+                logger.info(f"今天是非工作日，跳过定时打卡")
+                # 不记录跳过的情况
+                return
+            
+            # 检查是否可以打卡
+            if not check_sign_time(hour, minute):
+                logger.info(f"当前时间不在打卡时间段内，跳过定时打卡")
+                
+                # 记录失败状态，因为这是打卡过程中的一个实际错误
+                task_log = TaskLog(
+                    user_id=user_id,
+                    user_name=user_name,
+                    dep_id=dep_id,
+                    dep_name=dep_name,
+                    task_type=task_type,
+                    task_time=task_time,
+                    status="failed",
+                    message="当前时间不在打卡时间段内"
+                )
+                db.session.add(task_log)
+                db.session.commit()
+                
+                add_sign_log(user_id, user_name, dep_id, dep_name, "定时", "时间段不允许")
+                return
+            
+            # 检查是否已经打过卡
+            if not check_attendance_status(user_id, task_type):
+                logger.info(f"用户已完成该时段打卡，跳过定时打卡")
+                # 不记录跳过的情况
+                return
+            
+            # 添加随机等待时间(0-40秒)，使打卡时间更自然
+            wait_seconds = random.randint(0, 40)
+            logger.info(f"随机等待{wait_seconds}秒后执行打卡")
+            time.sleep(wait_seconds)
+            
+            # 执行打卡前创建记录
             task_log = TaskLog(
                 user_id=user_id,
                 user_name=user_name,
@@ -295,44 +333,6 @@ def scheduled_sign(user_id, dep_id, user_name, dep_name):
             )
             db.session.add(task_log)
             db.session.commit()
-            
-            # 检查今天是否是工作日
-            if not check_working_day(user_id):
-                logger.info(f"今天是非工作日，跳过定时打卡")
-                add_sign_log(user_id, user_name, dep_id, dep_name, "定时", "非工作日")
-                
-                # 更新任务状态
-                task_log.status = "skipped"
-                task_log.message = "今天是非工作日"
-                db.session.commit()
-                return
-            
-            # 检查是否可以打卡
-            if not check_sign_time(hour, minute):
-                logger.info(f"当前时间不在打卡时间段内，跳过定时打卡")
-                add_sign_log(user_id, user_name, dep_id, dep_name, "定时", "时间段不允许")
-                
-                # 更新任务状态
-                task_log.status = "failed"
-                task_log.message = "当前时间不在打卡时间段内"
-                db.session.commit()
-                return
-            
-            # 检查是否已经打过卡
-            if not check_attendance_status(user_id, task_type):
-                logger.info(f"用户已完成该时段打卡，跳过定时打卡")
-                add_sign_log(user_id, user_name, dep_id, dep_name, "定时", "已完成打卡")
-                
-                # 更新任务状态
-                task_log.status = "skipped"
-                task_log.message = "用户已完成该时段打卡"
-                db.session.commit()
-                return
-            
-            # 添加随机等待时间(0-40秒)，使打卡时间更自然
-            wait_seconds = random.randint(0, 40)
-            logger.info(f"随机等待{wait_seconds}秒后执行打卡")
-            time.sleep(wait_seconds)
             
             # 执行打卡
             result = fast_sign(user_id, dep_id)

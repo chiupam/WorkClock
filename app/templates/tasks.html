@@ -28,10 +28,9 @@
                             <th>ID</th>
                             <th>用户姓名</th>
                             <th>用户ID</th>
-                            <th>部门名称</th>
                             <th>部门ID</th>
-                            <th>早上打卡</th>
-                            <th>下午打卡</th>
+                            <th>上班定时</th>
+                            <th>下班定时</th>
                             <th>启用状态</th>
                             <th>更新时间</th>
                         </tr>
@@ -42,11 +41,10 @@
                             <td>{{ task.id }}</td>
                             <td>{{ task.user_name }}</td>
                             <td>{{ task.user_id }}</td>
-                            <td>{{ task.dep_name }}</td>
                             <td>{{ task.dep_id }}</td>
                             <td class="bool-{{ task.morning }}">{{ "是" if task.morning else "否" }}</td>
                             <td class="bool-{{ task.afternoon }}">{{ "是" if task.afternoon else "否" }}</td>
-                            <td class="bool-{{ task.enabled }}">{{ "启用" if task.enabled else "禁用" }}</td>
+                            <td class="status-{{ task.enabled }}">{{ "启用" if task.enabled else "禁用" }}</td>
                             <td>{{ task.updated_at }}</td>
                         </tr>
                         {% endfor %}
@@ -62,8 +60,6 @@
                         <tr>
                             <th>ID</th>
                             <th>用户姓名</th>
-                            <th>用户ID</th>
-                            <th>部门名称</th>
                             <th>任务类型</th>
                             <th>执行时间</th>
                             <th>状态</th>
@@ -76,9 +72,7 @@
                         <tr>
                             <td>{{ log.id }}</td>
                             <td>{{ log.user_name }}</td>
-                            <td>{{ log.user_id }}</td>
-                            <td>{{ log.dep_name }}</td>
-                            <td>{{ "早上" if log.task_type == "morning" else "下午" }}</td>
+                            <td>{{ "上班" if log.task_type == "morning" else "下班" }}</td>
                             <td>{{ log.task_time }}</td>
                             <td class="task-status-{{ log.status }}">{{ log.status }}</td>
                             <td>{{ log.message }}</td>
