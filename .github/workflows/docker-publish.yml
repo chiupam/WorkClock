@@ -12,10 +12,10 @@ on:
       - '.github/workflows/docker-publish.yml'
       - 'app/**'
       - 'config.py'
-      - 'database.py'
       - 'Dockerfile'
-      - 'gunicorn.conf.py'
+      - 'docker-entrypoint.sh'
       - 'run.py'
+      - 'requirements.txt'
     branches:
       - main
 

@@ -1,4 +1,4 @@
-FROM work:base
+FROM chiupam/workclock:base
 
 # 设置工作目录
 WORKDIR /app
