@@ -1,72 +1,39 @@
+# 空的初始化文件，使app目录成为一个Python包 
+
+import logging
 import os
 
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_sse import sse
-from flask_socketio import SocketIO
+# 配置基本日志（详细配置会在加载配置后进行）
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
-from config import Config
+# 设置第三方库的日志级别
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
-db = SQLAlchemy()
-socketio = SocketIO()
+# 设置模块日志
+logger = logging.getLogger(__name__)
 
+# 定义数据库文件常量
+USER_DB_FILE = "data/user.db" # 用户信息数据库
+SIGN_DB_FILE = "data/sign.db" # 签到日志数据库
+LOG_DB_FILE = "data/log.db"
+SET_DB_FILE = "data/set.db"
+CRON_DB_FILE = "data/cron.db"
 
-def create_app(config_class=Config):
-    app = Flask(__name__, 
-                static_folder='static',
-                template_folder='templates')
-    app.config.from_object(config_class)
-    
-    # 确保设置了 SECRET_KEY
-    if not app.config.get('SECRET_KEY'):
-        app.config['SECRET_KEY'] = 'dev-key-123'
-    
-    # 禁用 remember cookie
-    app.config['REMEMBER_COOKIE_ENABLED'] = False
-    
-    db.init_app(app)
-    socketio.init_app(app, cors_allowed_origins="*")
-    
-    # 确保 instance 目录存在
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+# 确保data目录存在
+data_dir = "data"
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
 
-    with app.app_context():
-        # 使用try-except捕获表已存在的错误
-        try:
-            db.create_all()
-            if 'sign' in app.config.get('SQLALCHEMY_BINDS', {}):
-                db.create_all(bind_key='sign')
-            if 'logs' in app.config.get('SQLALCHEMY_BINDS', {}):
-                db.create_all(bind_key='logs')
-        except Exception as e:
-            app.logger.warning(f"创建数据库表时出现警告 (可能表已存在): {str(e)}")
-    
-    from app.routes import main
-    app.register_blueprint(main)
-    app.register_blueprint(sse, url_prefix='/stream')
-    
-    # 初始化APScheduler
-    from app.scheduler import init_scheduler
-    init_scheduler(app)
-    
-    # 初始化命令清理线程
-    from app.routes import init_cleanup_thread
-    init_cleanup_thread(app)
-    
-    @app.after_request
-    def add_header(response):
-        """
-        添加响应头
-        :param response: 响应对象
-        :return: 响应对象
-        """
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-        return response
-    
-    return app 
+# 导入数据库初始化模块并执行初始化
+from app.utils.db_init import initialize_database
+
+# 初始化数据库
+initialize_database()
+
+# 输出初始化消息
+logger.info("应用初始化完成")

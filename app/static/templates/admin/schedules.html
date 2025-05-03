@@ -1,0 +1,33 @@
+{% extends "admin/index.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block styles %}
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/admin/schedules.css">
+<style>
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="schedules-container">
+    <div class="schedules-header">
+        <div>
+            <h1>定时任务管理</h1>
+            <p class="current-time">当前时间: {{ current_time }}</p>
+        </div>
+        <button class="refresh-btn" id="refreshBtn">刷新数据</button>
+    </div>
+    
+    <div id="schedulesTableContainer">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin/schedules.js"></script>
+{% endblock %} 

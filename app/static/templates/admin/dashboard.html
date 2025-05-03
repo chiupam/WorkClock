@@ -1,0 +1,135 @@
+{% extends "admin/index.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block styles %}
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/admin/dashboard.css">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>管理员仪表盘</h1>
+        <p class="welcome-text">欢迎回来，{{ user_info.username }}</p>
+        <p class="current-time">当前时间: {{ current_time }}</p>
+    </div>
+
+    <div class="stats-overview">
+        <div class="stats-card">
+            <div class="stats-icon">👥</div>
+            <div class="stats-content">
+                <div class="stats-value">{{ stats.total_users }}</div>
+                <div class="stats-label">总用户数</div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">🔆</div>
+            <div class="stats-content">
+                <div class="stats-value">{{ stats.active_users_today }}</div>
+                <div class="stats-label">今日活跃用户</div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">📆</div>
+            <div class="stats-content">
+                <div class="stats-value">{{ stats.active_users_week }}</div>
+                <div class="stats-label">本周活跃用户</div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">📊</div>
+            <div class="stats-content">
+                <div class="stats-value">{{ stats.active_users_month }}</div>
+                <div class="stats-label">本月活跃用户</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="system-info">
+        <h2>系统信息</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">系统名称</div>
+                <div class="info-value">{{ stats.system_name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">系统版本</div>
+                <div class="info-value">{{ stats.system_version }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">系统启动时间</div>
+                <div class="info-value">{{ stats.system_start_time }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">今日登录次数</div>
+                <div class="info-value">{{ stats.today_logins }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 显示当前时间并自动更新
+    function updateClock() {
+        const now = new Date();
+        const timeDisplay = document.querySelector('.current-time');
+        if (timeDisplay) {
+            const formattedTime = now.getFullYear() + '-' + 
+                                 padZero(now.getMonth() + 1) + '-' + 
+                                 padZero(now.getDate()) + ' ' + 
+                                 padZero(now.getHours()) + ':' + 
+                                 padZero(now.getMinutes()) + ':' + 
+                                 padZero(now.getSeconds());
+            timeDisplay.textContent = '当前时间: ' + formattedTime;
+        }
+    }
+    
+    function padZero(num) {
+        return num < 10 ? '0' + num : num;
+    }
+    
+    // 初始更新并设置定时器
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    // 统计卡片动画效果
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+        });
+    });
+    
+    // 使用axios获取最新统计数据
+    function refreshStats() {
+        axios.get('/admin/stats-data')
+            .then(function(response) {
+                if (response.data.success) {
+                    const stats = response.data.stats;
+                    // 更新统计数据
+                    document.querySelector('.stats-card:nth-child(1) .stats-value').textContent = stats.total_users;
+                    document.querySelector('.stats-card:nth-child(2) .stats-value').textContent = stats.active_users_today;
+                    document.querySelector('.stats-card:nth-child(3) .stats-value').textContent = stats.active_users_week;
+                    document.querySelector('.stats-card:nth-child(4) .stats-value').textContent = stats.active_users_month;
+                }
+            })
+            .catch(function(error) {
+                console.error('获取统计数据失败:', error);
+            });
+    }
+    
+    // 每60秒刷新一次统计数据
+    setInterval(refreshStats, 60000);
+});
+</script>
+{% endblock %}

@@ -1,28 +1,26 @@
 import logging
+import sys
 
-from app import create_app, socketio
+import uvicorn
+from dotenv import load_dotenv
 
-# 设置 Werkzeug 的日志级别为 INFO，记录请求和操作信息
-logging.getLogger('werkzeug').setLevel(logging.INFO)
+from config import settings
 
-# 设置根日志级别为 INFO
-logging.getLogger().setLevel(logging.INFO)
+# 配置日志级别 - 禁用httpcore和httpx的DEBUG日志
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
-# 配置应用程序的主要日志
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)  # 改为 INFO 级别，记录重要操作信息
+if __name__ == "__main__":
+    # 加载.env文件中的环境变量
+    load_dotenv()
 
-try:
-    app = create_app()
-    
-    if __name__ == '__main__':
-        socketio.run(
-            app,
-            debug=True, 
-            host='0.0.0.0', 
-            port=9051
-        )
-except Exception as e:
-    logger.error(f"启动失败: {str(e)}")
-    raise e
-    
+    host = "0.0.0.0"
+    port = 8000
+    reload = True
+    log_level = settings.LOG_LEVEL.lower()
+
+    try:        
+        uvicorn.run("app.main:app", host=host, port=port, reload=reload, log_level=log_level)
+    except ValueError as e:
+        print(f"错误: {str(e)}")
+        sys.exit(1) 

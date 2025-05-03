@@ -1,14 +1,10 @@
-# Python
+# Python相关
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-.env
-.venv/
 env/
-venv/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -24,37 +20,94 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.log
+.venv/
 
-# IDE
+# 系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+.*.swp
+.*.swo
+
+# IDE相关
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.vs/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 项目特定敏感文件
+data/*.db
+data/needs_restart
+*.db
+*.sqlite3
+*.sqlite
+credentials.json
+.env
+config.json
+config.local.py
+config.*.py
+!config.py
+secret_key.txt
+
+# 日志和临时文件
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+temp/
+tmp/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node相关
+node_modules/
+package-lock.json
+yarn.lock
+
+# 其他
+.git/
+.dockerignore
+.editorconfig
+
+# 虚拟环境
+venv/
+ENV/
+.env
+
+# 数据库
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# 日志
+*.log
+logs/
+
+# IDE相关
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# 操作系统相关
 .DS_Store
+Thumbs.db
 
-# Docker
-.docker/
-docker-compose.override.yml
-.env.docker
-
-# 敏感数据和日志
-*.log
-.env*
-!.env.example
-config.local.py
-*.pem
-*.key
-*.crt
-secrets/
-credentials/
-*.db
-*.sqlite3
-instance/
-
-# 其他
-node_modules/
-.coverage
-htmlcov/
-.pytest_cache/
-.tox/
-.mypy_cache/
+# Docker相关
+.dockerignore 

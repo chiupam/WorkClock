@@ -1,586 +1,620 @@
-// 初始化页面信息
-async function getInfo() {
-  // 显示加载指示器
-  document.getElementById('loading-spinner').style.display = 'flex';
-  
-  try {
-    const response = await fetch('/getInfo', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': document.cookie
-      }
-    });
+// 用户信息页面的交互逻辑
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化时间显示
+    updateTime();
+    // 设置时间更新间隔
+    setInterval(updateTime, 1000);
     
-    const data = await response.json();
-    
-    if (data.success) {
-      displayUserInfo(data.user);
-      displayAttendanceData(data.attendance);
-      if (data.attendance.isworkingday) {
-        checkShowSignButton(data.button);
-      }
-    } else {
-      console.error('获取考勤记录失败：', data.message);
-      alert('获取考勤记录失败：' + data.message);
+    // 登出按钮事件
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('logout-form').submit();
+        });
     }
-  } catch (error) {
-    console.error('获取考勤记录错误：', error);
-    alert('获取考勤记录错误：' + error.message);
-  } finally {
-    // 隐藏加载指示器
-    document.getElementById('loading-spinner').style.display = 'none';
-  }
-}
-
-// 显示用户信息
-async function displayUserInfo(data) {
-  document.getElementById('userName').textContent = data.userName;
-  document.getElementById('depId').textContent = data.depId;
-  document.getElementById('userId').textContent = data.userId;
-  document.getElementById('position').textContent = data.position || '未知';
-  document.getElementById('depName').textContent = data.depName || '未知';
-
-  // 保存用户数据到 localStorage
-  localStorage.setItem('userData', JSON.stringify(data));
-}
-
-// 显示考勤数据
-function displayAttendanceData(data) {
-  const container = document.getElementById('attendanceData');
-  
-  // 如果今天是休息日，只显示休息提示
-  if (!data.isworkingday) {
-    container.innerHTML = `
-      <div class="attendance-record" style="background-color: #f6ffed; border: 1px solid #b7eb8f;">
-        <div class="record-content">
-          <div style="color: #52c41a; padding: 10px;">
-            <strong>温馨提示：</strong>今天是休息日，无需打卡。祝您休息愉快！
-          </div>
-        </div>
-      </div>
-    `;
-    // 确保不显示打卡按钮
-    document.querySelector('.sign-button').style.display = 'none';
-    return;
-  }
-  
-  // SVG 图标
-  const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
-  const locationSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
-  const upSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
-  const downSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>`;
-  
-  let html = '';
-
-  // 区分错误信息和补卡提醒
-  if (data.errorMsg) {
-    html += `
-      <div class="attendance-record" style="background-color: #fff0f0; border: 1px solid #ffcdd2;">
-        <div class="record-content">
-          <div style="color: #d32f2f; padding: 10px;">
-            <strong>请求出错：</strong>${data.errorMsg}
-          </div>
-        </div>
-      </div>
-    `;
-  } else if (data.needReminder) {
-    html += `
-      <div class="attendance-record" style="background-color: #fff3cd; border: 1px solid #ffeeba;">
-        <div class="record-content">
-          <div style="color: #856404; padding: 10px;">
-            <strong>温馨提示：</strong>今日上班未打卡，请尽快联系相关人员进行补卡。
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // 显示打卡记录
-  const records = [data.clockInRecord, data.clockOutRecord].filter(Boolean);
-  
-  if (records.length > 0) {
-    html += records.map(record => `
-      <div class="attendance-record" id="${record.type === '上班' ? 'clockIn' : 'clockOut'}">
-        <div class="standard-time">
-          规定${record.type}时间 ${record.standardTime}
-        </div>
-        <div class="record-content">
-          <div class="record-details">
-            <div class="type-and-info">
-              <div class="clock-type-badge">
-                ${record.type === "上班" ? upSvg : downSvg}
-              </div>
-              <div class="info-group">
-                <div class="time-info">
-                  <span class="time-icon">${clockSvg}</span>
-                  ${record.clockTime}
-                </div>
-                <div class="location-info">
-                  <span class="location-icon">${locationSvg}</span>
-                  ${record.location}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `).join('');
-  } else if (!data.needReminder && !data.errorMsg) {
-    html = '<p class="no-records">暂无打卡记录</p>';
-  }
-  
-  container.innerHTML = html;
-}
-
-// 检查是否显示打卡按钮
-function checkShowSignButton(data) {            
-  const signButton = document.querySelector('.sign-button');
-  lastButtonState = data; // 保存按钮状态
-  if (data.show) {
-    signButton.style.display = 'flex';
-
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    const attType = currentTime >= 17 * 60 ? `下班` : `上班`;
-    signButton.querySelector('span:not(.time)').textContent = `${attType}打卡`;
-
-    return true;
-  } else {
-    signButton.style.display = 'none';
-    return false;
-  }
-}
+    
+    // 考勤统计按钮点击事件
+    const statsBtn = document.getElementById('stats-btn');
+    if (statsBtn) {
+        statsBtn.addEventListener('click', function() {
+            // 设置月份选择器为当前月份
+            const monthSelect = document.getElementById('monthSelect');
+            const currentMonth = new Date().getMonth() + 1; // 月份从0开始，所以+1
+            monthSelect.value = currentMonth;
+            
+            showAttendanceStats();
+        });
+    }
+    
+    // 添加定时按钮点击事件
+    const scheduleBtn = document.getElementById('schedule-btn');
+    if (scheduleBtn) {
+        scheduleBtn.addEventListener('click', function() {
+            showScheduleModal();
+        });
+    }
+    
+    // 签到按钮事件
+    const signBtn = document.getElementById('sign-btn');
+    if (signBtn) {
+        signBtn.addEventListener('click', function() {
+            signIn();
+        });
+    }
+});
 
 // 更新时间显示
 function updateTime() {
-  const now = new Date();
-  const timeString = now.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-  document.getElementById('currentTime').textContent = timeString;
-}
-
-// 签到功能
-async function signIn() {
-  // 显示加载指示器
-  const loadingOverlay = document.createElement('div');
-  loadingOverlay.className = 'alert-overlay';
-  
-  const loadingBox = document.createElement('div');
-  loadingBox.className = 'loading-box';
-  loadingBox.innerHTML = `
-    <div class="spinner"></div>
-    <div class="loading-text">正在打卡，请稍候...</div>
-  `;
-  
-  loadingOverlay.appendChild(loadingBox);
-  document.body.appendChild(loadingOverlay);
-
-  const now = new Date();
-  const currentTime = now.getHours() * 60 + now.getMinutes();
-  try {
-    const response = await fetch('/sign', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': document.cookie
-      },
-      body: JSON.stringify({
-        depId: JSON.parse(localStorage.getItem('userData')).depId,
-        attType: currentTime >= 17 * 60 ? `下班` : `上班`,
-        clockIn: document.getElementById('clockIn') !== null,
-        clockOut: document.getElementById('clockOut') !== null
-      })
+    const timeElement = document.getElementById('currentTime');
+    if (!timeElement) return;
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
     });
+    timeElement.textContent = timeString;
     
-    const result = await response.json();
-    
-    // 移除加载指示器
-    loadingOverlay.remove();
-    
-    // 创建提示框
-    const overlay = document.createElement('div');
-    overlay.className = 'alert-overlay';
-    
-    const alertBox = document.createElement('div');
-    alertBox.className = `alert-box ${result.success ? 'alert-success' : 'alert-error'}`;
-    
-    if (result.success) {
-      // 成功提示，显示倒计时
-      alertBox.innerHTML = `
-        <div class="alert-icon">✓</div>
-        <div class="alert-message">
-          ${result.message}
-        </div>
-        <div class="countdown" style="color: #666; margin-top: 10px;">3 秒后自动刷新</div>
-      `;
-      
-      overlay.appendChild(alertBox);
-      document.body.appendChild(overlay);
-      
-      // 倒计时并自动刷新
-      let countdown = 3;
-      const countdownEl = alertBox.querySelector('.countdown');
-      const timer = setInterval(() => {
-        countdown--;
-        countdownEl.textContent = `${countdown} 秒后自动刷新`;
-        if (countdown <= 0) {
-          clearInterval(timer);
-          overlay.remove();
-          getInfo();
-        }
-      }, 1000);
-    } else {
-      // 失败提示，保持原样
-      alertBox.innerHTML = `
-        <div class="alert-icon">✕</div>
-        <div class="alert-message">
-          打卡失败：${result.message}
-        </div>
-        <button class="alert-button" onclick="closeAlert(this)">确定</button>
-      `;
-      
-      overlay.appendChild(alertBox);
-      document.body.appendChild(overlay);
-    }
-  } catch (error) {
-    // 移除加载指示器
-    document.querySelector('.alert-overlay')?.remove();
-    
-    // 显示错误提示
-    const overlay = document.createElement('div');
-    overlay.className = 'alert-overlay';
-    
-    const alertBox = document.createElement('div');
-    alertBox.className = 'alert-box alert-error';
-    
-    alertBox.innerHTML = `
-      <div class="alert-icon">✕</div>
-      <div class="alert-message">
-        签到错误：${error.message}
-      </div>
-      <button class="alert-button" onclick="closeAlert(this)">确定</button>
-    `;
-    
-    overlay.appendChild(alertBox);
-    document.body.appendChild(overlay);
-  }
+    // 根据当前时间更新打卡按钮文本
+    updateSignButtonText();
 }
 
-// 添加关闭提示框的函数
-function closeAlert(button) {
-  const overlay = button.closest('.alert-overlay');
-  if (overlay) {
-    overlay.remove();
-  }
+// 更新打卡按钮文本
+function updateSignButtonText() {
+    const signButton = document.getElementById('sign-btn');
+    if (!signButton) return;
+    
+    const textSpan = signButton.querySelector('span:not(.time)');
+    if (!textSpan) return;
+    
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const attType = currentTime >= 17 * 60 ? '下班' : '上班';
+    
+    textSpan.textContent = `${attType}打卡`;
 }
 
-// 登出功能
-async function logout() {
-  localStorage.removeItem('userData');
-  window.location.href = '/logout';
-}
-
-// 添加 SVG 图标
-const checkSvgGreen = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-const checkSvgYellow = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#faad14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-const crossSvgRed = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d4f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-
-// 添加返回打卡页面的函数
-function showAttendanceList() {
-  const attendanceList = document.querySelector('.attendance-list');
-  const attendanceStats = document.querySelector('.attendance-stats');
-  const signButton = document.querySelector('.sign-button');
-  
-  attendanceStats.style.display = 'none';
-  attendanceList.style.display = 'block';
-  if (signButton && checkShowSignButton(lastButtonState)) signButton.style.display = 'flex';
-}
-
-// 保存按钮状态的变量
-let lastButtonState = null;
-
+// 显示考勤统计
 async function showAttendanceStats() {
-  const attendanceList = document.querySelector('.attendance-list');
-  const attendanceStats = document.querySelector('.attendance-stats');
-  const signButton = document.querySelector('.sign-button');
-  
-  // 显示加载指示器
-  document.getElementById('loading-spinner').style.display = 'flex';
-  
-  try {
-    const response = await fetch('/getYueTjList?' + new URLSearchParams({
-      month: document.getElementById('monthSelect').value
-    }));
-    const data = await response.json();
-    const statistics = data.statistics
-    const details = data.details
-
-    // 更新统计数据
-    if (statistics) {
-      document.getElementById('leaveDays').textContent = statistics.LeaveDays || 0;
-      document.getElementById('lateNumber').textContent = statistics.LateNumber || 0;
-      document.getElementById('ztNumber').textContent = statistics.ZtNumber || 0;
-      document.getElementById('lackCarNumber').textContent = statistics.LackCarNumber || 0;
-    }
+    const attendanceList = document.querySelector('.attendance-list');
+    const attendanceStats = document.querySelector('.attendance-stats');
+    const signButton = document.querySelector('.sign-button');
     
+    // 显示加载中
+    document.getElementById('loading-spinner').style.display = 'flex';
+    
+    try {
+        // 获取当前选择的月份，如果没有选择，则使用当前月份
+        const monthSelect = document.getElementById('monthSelect');
+        if (!monthSelect.value) {
+            const currentMonth = new Date().getMonth() + 1; // 月份从0开始，所以+1
+            monthSelect.value = currentMonth;
+        }
+        const selectedMonth = monthSelect.value;
+        const selectedYear = new Date().getFullYear();
+        
+        // 调用统计API
+        const response = await axios.post('/stats/monthly', {
+            month: parseInt(selectedMonth),
+            year: selectedYear
+        });
+        
+        const data = response.data;
+        
+        if (data.success) {
+            // 更新统计摘要
+            const statistics = data.statistics;
+            document.getElementById('leaveDays').textContent = statistics.LeaveDays || 0;
+            document.getElementById('lateNumber').textContent = statistics.LateNumber || 0;
+            document.getElementById('ztNumber').textContent = statistics.ZtNumber || 0;
+            document.getElementById('lackCarNumber').textContent = statistics.LackCarNumber || 0;
+            
+            // 生成日历
+            generateCalendar(data.details, data.month, data.year, data.days);
+            
+            // 切换显示
+            attendanceList.style.display = 'none';
+            attendanceStats.style.display = 'block';
+            if (signButton) signButton.style.display = 'none';
+        } else {
+            showAlert('获取失败', '无法获取考勤统计数据', 'error');
+        }
+    } catch (error) {
+        console.error('获取考勤统计出错:', error);
+        showAlert('获取失败', '获取考勤统计数据失败', 'error');
+    } finally {
+        // 隐藏加载中
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
+}
+
+// 生成日历表格
+function generateCalendar(details, month, year, daysInMonth) {
     const tbody = document.getElementById('statsTableBody');
     const today = new Date();
     const currentMonth = today.getMonth() + 1;
-    const selectedMonth = parseInt(document.getElementById('monthSelect').value);
-    const selectedYear = today.getFullYear();
+    const currentDay = today.getDate();
     
     // 获取选中月份的第一天是星期几（0-6，0代表星期日）
-    const firstDay = new Date(selectedYear, selectedMonth - 1, 1).getDay();
-    // 获取选中月份的总天数
-    const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    
+    // SVG图标定义（保留原始颜色，但减小大小）
+    const checkSvgGreen = `<span style="color: #52c41a; font-size: 12px;">✓</span>`;
+    const checkSvgYellow = `<span style="color: #faad14; font-size: 12px;">✓</span>`;
+    const crossSvgRed = `<span style="color: #ff4d4f; font-size: 12px;">✕</span>`;
     
     let html = '';
     let dayCounter = 1;
     
     // 生成日历表格
     for (let week = 0; dayCounter <= daysInMonth; week++) {
-      html += '<tr>';
-      
-      for (let weekday = 0; weekday < 7; weekday++) {
-        if (week === 0 && weekday < firstDay || dayCounter > daysInMonth) {
-          html += '<td></td>';
-        } else {
-          const day = details[dayCounter - 1];
-          let dayContent = `<div class="calendar-day">${dayCounter}`;
-          
-          // 判断是否是未来日期
-          const selectedDate = new Date(selectedYear, selectedMonth - 1, dayCounter);
-          const isInFuture = selectedDate > today;
-          
-          if (isInFuture) {
-            // 未来日期不显示任何状态
-            dayContent += '</div>';
-            html += `<td>${dayContent}</td>`;
-            dayCounter++;
-            continue;
-          }
-          
-          // 添加上下班状态
-          if (day) {
-            if (day.isholiday === 1 && day.jjr) {
-              dayContent += `<div class="holiday-name">${
-                day.jjr.includes("节") && day.jjr.length > 2 ? day.jjr.replace("节", "") : day.jjr
-              }</div>`;
-            } else if (day.IsQj === 1) {
-              dayContent += `<div class="leave-day">请假</div>`;
-            } else if (selectedMonth === currentMonth && dayCounter === today.getDate()) {
-              // 当天的打卡状态
-              dayContent += `<div class="day-status">`;
-              if (today.getHours() >= 9) {
-                dayContent += day.SWSBDKCS === 0 ? crossSvgRed :
-                  (day.IsSwSbbuka === 1 ? checkSvgYellow : checkSvgGreen);
-              } else {
-                dayContent += `<span class="pending-sign">待</span>`;
-              }
-              if (today.getHours() >= 17) {
-                dayContent += day.XWXBDKCS === 0 ? crossSvgRed :
-                  (day.IsXwXbbuka === 1 ? checkSvgYellow : checkSvgGreen);
-              } else {
-                dayContent += `<span class="pending-sign">待</span>`;
-              }
-              dayContent += `</div>`;
-            } else if (day.isholiday === 1) {
-              dayContent += `<div class="rest-day">休息</div>`;
+        html += '<tr>';
+        
+        for (let weekday = 0; weekday < 7; weekday++) {
+            if (week === 0 && weekday < firstDay) {
+                html += '<td></td>';
+            } else if (dayCounter > daysInMonth) {
+                html += '<td></td>';
             } else {
-              dayContent += `<div class="day-status">`;
-              dayContent += day.SWSBDKCS === 0 ? crossSvgRed :
-                (day.IsSwSbbuka === 1 ? checkSvgYellow : checkSvgGreen);
-              dayContent += day.XWXBDKCS === 0 ? crossSvgRed :
-                (day.IsXwXbbuka === 1 ? checkSvgYellow : checkSvgGreen);
-              dayContent += `</div>`;
+                // 判断是否有当天的考勤记录
+                const day = details && details[dayCounter - 1];
+                
+                // 所有日期都使用相同的基本结构，确保高度一致
+                let dayContent = `<div class="calendar-day"><div class="day-number">${dayCounter}</div>`;
+                
+                // 判断是否是未来日期
+                const selectedDate = new Date(year, month - 1, dayCounter);
+                const isInFuture = selectedDate > today;
+                
+                if (!isInFuture && day) {
+                    // 处理节假日（特殊显示）
+                    if (day.isholiday === 1 && day.jjr) {
+                        let holidayName = day.jjr;
+                        if (holidayName.length >= 3) {
+                            holidayName = holidayName.substring(0, 2);
+                        }
+                        // 将节假日名称字符垂直排列
+                        let verticalText = '';
+                        for (let i = 0; i < holidayName.length; i++) {
+                            verticalText += `<div class="vertical-char">${holidayName[i]}</div>`;
+                        }
+                        dayContent += `<div class="rest-day vertical-text">${verticalText}</div>`;
+                    }
+                    // 处理请假
+                    else if (day.IsQj === 1) {
+                        dayContent += `<div class="leave-day vertical-text"><div class="vertical-char">请</div><div class="vertical-char">假</div></div>`;
+                    }
+                    // 处理休息日
+                    else if (day.isholiday === 1) {
+                        dayContent += `<div class="rest-day vertical-text"><div class="vertical-char">休</div><div class="vertical-char">息</div></div>`;
+                    }
+                    // 处理正常工作日
+                    else {
+                        const morningStatus = getMorningStatus(day);
+                        const afternoonStatus = getAfternoonStatus(day);
+                        
+                        // 如果上下午都缺卡
+                        if (morningStatus === 'missing' && afternoonStatus === 'missing') {
+                            dayContent += `<div class="absent-day vertical-text"><div class="vertical-char">缺</div><div class="vertical-char">卡</div></div>`;
+                        } 
+                        // 如果上下午状态不同
+                        else {
+                            dayContent += `<div class="status-icons">`;
+                            // 添加上午状态
+                            if (morningStatus === 'normal') {
+                                dayContent += checkSvgGreen;
+                            } else if (morningStatus === 'makeup') {
+                                dayContent += checkSvgYellow;
+                            } else if (morningStatus === 'missing') {
+                                dayContent += crossSvgRed;
+                            }
+                            
+                            // 添加下午状态
+                            if (afternoonStatus === 'normal') {
+                                dayContent += checkSvgGreen;
+                            } else if (afternoonStatus === 'makeup') {
+                                dayContent += checkSvgYellow;
+                            } else if (afternoonStatus === 'missing') {
+                                dayContent += crossSvgRed;
+                            }
+                            dayContent += `</div>`;
+                        }
+                    }
+                } else {
+                    // 未来日期添加占位符，确保与有内容的日期高度一致
+                    dayContent += `<div class="future-placeholder"></div>`;
+                }
+                
+                dayContent += '</div>';
+                html += `<td>${dayContent}</td>`;
+                dayCounter++;
             }
-          }
-          
-          dayContent += '</div>';
-          html += `<td>${dayContent}</td>`;
-          dayCounter++;
         }
-      }
-      
-      html += '</tr>';
+        
+        html += '</tr>';
     }
     
     tbody.innerHTML = html;
+}
+
+// 获取上午打卡状态
+function getMorningStatus(dayRecord) {
+    if (!dayRecord) return 'missing';
     
-    attendanceList.style.display = 'none';
-    if (signButton) signButton.style.display = 'none';
-    attendanceStats.style.display = 'block';
-  } catch (error) {
-    console.error('获取考勤统计失败：', error);
-    alert('获取考勤统计失败：' + error.message);
-  } finally {
-    document.getElementById('loading-spinner').style.display = 'none';
-  }
+    // 上午打卡次数
+    const morningClockCount = dayRecord.SWSBDKCS || 0;
+    // 上午是否补卡
+    const isMorningMakeup = dayRecord.IsSwSbbuka === 1;
+    
+    if (morningClockCount === 0) {
+        return 'missing';  // 缺卡
+    } else if (isMorningMakeup) {
+        return 'makeup';   // 补卡
+    } else {
+        return 'normal';   // 正常打卡
+    }
+}
+
+// 获取下午打卡状态
+function getAfternoonStatus(dayRecord) {
+    if (!dayRecord) return 'missing';
+    
+    // 下午打卡次数
+    const afternoonClockCount = dayRecord.XWXBDKCS || 0;
+    // 下午是否补卡
+    const isAfternoonMakeup = dayRecord.IsXwXbbuka === 1;
+    
+    if (afternoonClockCount === 0) {
+        return 'missing';  // 缺卡
+    } else if (isAfternoonMakeup) {
+        return 'makeup';   // 补卡
+    } else {
+        return 'normal';   // 正常打卡
+    }
 }
 
 // 显示定时打卡模态框
 function showScheduleModal() {
-  // 首先获取当前用户的定时任务设置
-  fetchScheduleSettings();
-  // 显示模态框
-  document.getElementById('scheduleModal').style.display = 'block';
-}
-
-// 关闭定时打卡模态框
-function closeScheduleModal() {
-  document.getElementById('scheduleModal').style.display = 'none';
-}
-
-// 获取用户当前的定时任务设置
-async function fetchScheduleSettings() {
-  try {
-    const response = await fetch('/getScheduleSettings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': document.cookie
-      }
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      // 设置复选框状态
-      document.getElementById('scheduleMorning').checked = data.settings.scheduleMorning;
-      document.getElementById('scheduleAfternoon').checked = data.settings.scheduleAfternoon;
-      
-      // 显示用户的定时打卡时间
-      updateScheduleTimes(data.schedule_times, data.current_users, data.max_users);
-    } else {
-      console.error('获取定时设置失败：', data.message);
+    const modal = document.getElementById('scheduleModal');
+    if (modal) {
+        // 清空之前的时间框
+        document.getElementById('morningTimeGrid').innerHTML = '<div class="loading-box">加载中...</div>';
+        document.getElementById('afternoonTimeGrid').innerHTML = '<div class="loading-box">加载中...</div>';
+        
+        // 显示模态框
+        modal.style.display = 'block';
+        
+        // 加载用户定时设置状态并显示
+        loadUserSchedule();
     }
-  } catch (error) {
-    console.error('获取定时设置错误：', error);
-  }
 }
 
-// 更新定时打卡时间显示
-function updateScheduleTimes(scheduleTimes, currentUsers, maxUsers) {
-  const scheduleTimesDiv = document.getElementById('schedule-times');
-  const morningTimesSpan = document.querySelector('#morning-times .time-values');
-  const afternoonTimesSpan = document.querySelector('#afternoon-times .time-values');
-  const warningDiv = document.getElementById('user-limit-warning');
-  
-  // 显示时间区域
-  scheduleTimesDiv.style.display = 'block';
-  
-  // 显示打卡时间
-  if (scheduleTimes.user_position >= 0 && scheduleTimes.user_position <= 2) {
-    morningTimesSpan.textContent = scheduleTimes.morning_times.join('、');
-    afternoonTimesSpan.textContent = scheduleTimes.afternoon_times.join('、');
+// 初始化时间框点击事件
+function initTimeBoxes() {
+    const timeBoxes = document.querySelectorAll('.time-box');
     
-    // 如果已有定时任务设置，隐藏警告
-    warningDiv.style.display = 'none';
-  } else if (currentUsers >= maxUsers) {
-    // 如果定时任务已满，显示警告
-    warningDiv.style.display = 'block';
-    warningDiv.querySelector('p').textContent = `目前定时任务名额已满 (${currentUsers}/${maxUsers})，暂无法添加。`;
+    timeBoxes.forEach(box => {
+        // 移除已有的点击事件（避免重复绑定）
+        box.removeEventListener('click', toggleTimeBoxSelection);
+        // 添加点击事件
+        box.addEventListener('click', toggleTimeBoxSelection);
+    });
+}
+
+// 时间框点击事件处理函数
+function toggleTimeBoxSelection() {
+    this.classList.toggle('selected');
+}
+
+// 动态生成时间框
+function generateTimeBoxes(times, period, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        return;
+    }
     
-    // 隐藏时间显示
-    document.querySelector('.time-details').style.display = 'none';
-  }
+    container.innerHTML = ''; // 清空容器
+    
+    // 如果没有时间选项，显示提示信息
+    if (!times || !times.length) {
+        container.innerHTML = '<div class="no-times-message">无可用时间选项</div>';
+        return;
+    }
+    
+    times.forEach((time, index) => {
+        // 创建时间框
+        const timeBox = document.createElement('div');
+        timeBox.className = 'time-box';
+        timeBox.setAttribute('data-time', time);
+        timeBox.setAttribute('data-period', period);
+        timeBox.setAttribute('data-index', index);
+        
+        // 添加时间文本
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = time;
+        
+        // 组装DOM
+        timeBox.appendChild(timeSpan);
+        container.appendChild(timeBox);
+        
+        // 添加点击事件
+        timeBox.addEventListener('click', toggleTimeBoxSelection);
+    });
+}
+
+// 加载用户定时设置
+async function loadUserSchedule() {
+    try {
+        // 显示加载中
+        document.getElementById('loading-spinner').style.display = 'flex';
+        
+        // 从服务器获取用户ID
+        const userId = getUserId();
+        
+        if (!userId) {
+            showAlert('错误', '无法获取用户ID', 'error');
+            return;
+        }
+        
+        // 从服务器获取定时状态
+        const response = await axios.get(`/schedules/tasks`);
+        const data = response.data;
+        
+        // 动态生成时间框
+        if (data.morning_times && data.morning_times.length > 0) {
+            generateTimeBoxes(data.morning_times, 'morning', 'morningTimeGrid');
+        } else {
+            document.getElementById('morningTimeGrid').innerHTML = '<div class="no-times-message">无可用时间选项</div>';
+        }
+        
+        if (data.afternoon_times && data.afternoon_times.length > 0) {
+            generateTimeBoxes(data.afternoon_times, 'afternoon', 'afternoonTimeGrid');
+        } else {
+            document.getElementById('afternoonTimeGrid').innerHTML = '<div class="no-times-message">无可用时间选项</div>';
+        }
+        
+        // 清除所有现有的选中状态
+        document.querySelectorAll('.time-box').forEach(box => {
+            box.classList.remove('selected');
+        });
+        
+        // 设置时间框选中状态
+        setTimeout(() => {
+            // 根据用户的选择状态标记时间框
+            if (data.morning_selections && data.morning_selections.length > 0) {
+                const morningTimeBoxes = document.querySelectorAll('.time-box[data-period="morning"]');
+                
+                data.morning_selections.forEach((selected, index) => {
+                    if (selected === 1 && index < morningTimeBoxes.length) {
+                        morningTimeBoxes[index].classList.add('selected');
+                    }
+                });
+            }
+            
+            if (data.afternoon_selections && data.afternoon_selections.length > 0) {
+                const afternoonTimeBoxes = document.querySelectorAll('.time-box[data-period="afternoon"]');
+                
+                data.afternoon_selections.forEach((selected, index) => {
+                    if (selected === 1 && index < afternoonTimeBoxes.length) {
+                        afternoonTimeBoxes[index].classList.add('selected');
+                    }
+                });
+            }
+        }, 100); // 短暂延迟确保DOM已更新
+    } catch (error) {
+        showAlert('获取失败', '无法获取定时打卡设置', 'error');
+        
+        // 在错误情况下显示提示信息
+        document.getElementById('morningTimeGrid').innerHTML = '<div class="no-times-message">获取时间选项失败</div>';
+        document.getElementById('afternoonTimeGrid').innerHTML = '<div class="no-times-message">获取时间选项失败</div>';
+    } finally {
+        // 隐藏加载中
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
 }
 
 // 保存定时打卡设置
 async function saveSchedule() {
-  // 显示加载指示器
-  document.getElementById('loading-spinner').style.display = 'flex';
-  
-  try {
-    const scheduleMorning = document.getElementById('scheduleMorning').checked;
-    const scheduleAfternoon = document.getElementById('scheduleAfternoon').checked;
-    
-    const response = await fetch('/saveScheduleSettings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': document.cookie
-      },
-      body: JSON.stringify({
-        scheduleMorning: scheduleMorning,
-        scheduleAfternoon: scheduleAfternoon
-      })
-    });
-    
-    const result = await response.json();
-    
-    // 关闭模态框
-    closeScheduleModal();
-    
-    // 创建提示框
-    const overlay = document.createElement('div');
-    overlay.className = 'alert-overlay';
-    
-    const alertBox = document.createElement('div');
-    alertBox.className = `alert-box ${result.success ? 'alert-success' : 'alert-error'}`;
-    
-    if (result.success) {
-      alertBox.innerHTML = `
-        <div class="alert-icon">✓</div>
-        <div class="alert-message">
-          ${result.message}
-        </div>
-        <button class="alert-button" onclick="closeAlert(this)">确定</button>
-      `;
-    } else {
-      alertBox.innerHTML = `
-        <div class="alert-icon">✕</div>
-        <div class="alert-message">
-          保存失败：${result.message}
-        </div>
-        <button class="alert-button" onclick="closeAlert(this)">确定</button>
-      `;
+    try {
+        // 显示加载中
+        document.getElementById('loading-spinner').style.display = 'flex';
+        
+        // 初始化选择状态数组（默认全部为0）
+        const morningSelections = [0, 0, 0];
+        const afternoonSelections = [0, 0, 0];
+        
+        // 获取上午时间框
+        const morningTimeBoxes = document.querySelectorAll('.time-box[data-period="morning"]');
+        // 获取下午时间框
+        const afternoonTimeBoxes = document.querySelectorAll('.time-box[data-period="afternoon"]');
+        
+        // 根据选中状态设置对应的值
+        morningTimeBoxes.forEach((box, index) => {
+            if (index < 3 && box.classList.contains('selected')) {
+                morningSelections[index] = 1;
+            }
+        });
+        
+        afternoonTimeBoxes.forEach((box, index) => {
+            if (index < 3 && box.classList.contains('selected')) {
+                afternoonSelections[index] = 1;
+            }
+        });
+        
+        const hasMorning = morningSelections.includes(1);
+        const hasAfternoon = afternoonSelections.includes(1);
+        
+        // 获取用户ID
+        const userId = getUserId();
+        
+        if (!userId) {
+            showAlert('错误', '无法获取用户ID', 'error');
+            return;
+        }
+        
+        // 保存设置到服务器
+        const response = await axios.post(`/schedules/tasks`, {
+            morning: hasMorning,
+            afternoon: hasAfternoon,
+            morning_times: morningSelections,
+            afternoon_times: afternoonSelections
+        });
+        
+        // 重新加载用户定时设置
+        await loadUserSchedule();
+        
+        // 显示成功消息
+        showAlert('设置已保存', "定时设置已成功保存", 'success');
+        
+        // 短暂延迟后关闭模态框
+        setTimeout(() => {
+            closeScheduleModal();
+        }, 1000);
+    } catch (error) {
+        let errorMsg = '保存定时打卡设置失败';
+        
+        if (error.response && error.response.data) {
+            errorMsg = error.response.data.message || errorMsg;
+        }
+        
+        showAlert('保存失败', errorMsg, 'error');
+    } finally {
+        // 隐藏加载中
+        document.getElementById('loading-spinner').style.display = 'none';
     }
+}
+
+// 获取用户ID
+function getUserId() {
+    // 从页面元素中获取用户ID
+    const userIdElement = document.getElementById('userId');
+    if (userIdElement) {
+        return userIdElement.textContent.trim();
+    }
+    return null;
+}
+
+// 签到功能
+function signIn() {
+    // 显示加载中
+    document.getElementById('loading-spinner').style.display = 'flex';
     
-    overlay.appendChild(alertBox);
-    document.body.appendChild(overlay);
+    // 获取当前打卡状态
+    const attendanceData = getAttendanceStatus();
     
-  } catch (error) {
-    console.error('保存定时设置错误：', error);
+    // 使用axios发送打卡请求到后端
+    axios.post('/sign', { attendance: attendanceData })
+        .then(response => {
+            // 隐藏加载器
+            document.getElementById('loading-spinner').style.display = 'none';
+            
+            const data = response.data;
+            
+            if (data.success) {
+                showAlert(data.clockType, data.message, data.success ? 'success' : 'error');
+                
+                // 刷新页面显示最新打卡信息
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showAlert(data.clockType, data.message || '打卡请求失败，请稍后再试。', 'error');
+            }
+        })
+        .catch(error => {
+            // 隐藏加载器
+            document.getElementById('loading-spinner').style.display = 'none';
+            console.error('打卡请求出错:', error);
+            
+            // 获取错误信息
+            const errorMsg = error.response ? error.response.data.message : '网络错误，请稍后再试';
+            showAlert('打卡失败', errorMsg, 'error');
+        });
+}
+
+// 获取当前打卡状态
+function getAttendanceStatus() {
+    // 检查页面上的打卡记录元素
+    const attendanceData = document.getElementById('attendanceData');
     
-    // 显示错误提示
-    const overlay = document.createElement('div');
-    overlay.className = 'alert-overlay';
+    // 获取上午和下午打卡记录
+    const hasMorningRecord = attendanceData.querySelector('.attendance-record:nth-child(1)') !== null;
+    const hasAfternoonRecord = attendanceData.querySelector('.attendance-record:nth-child(2)') !== null;
+    
+    // 根据记录情况返回状态码
+    if (!hasMorningRecord && !hasAfternoonRecord) {
+        return 0; // 不存在任何打卡记录
+    } else if (hasMorningRecord && !hasAfternoonRecord) {
+        return 1; // 存在上午打卡但不存在下午打卡
+    } else if (!hasMorningRecord && hasAfternoonRecord) {
+        return 2; // 只存在下午打卡
+    } else {
+        return 3; // 存在上午打卡又存在下午打卡
+    }
+}
+
+// 显示提示框
+function showAlert(title, message, type) {
+    // 创建提示框元素
+    const alertOverlay = document.createElement('div');
+    alertOverlay.className = 'alert-overlay';
     
     const alertBox = document.createElement('div');
-    alertBox.className = 'alert-box alert-error';
+    alertBox.className = `alert-box alert-${type}`;
+    
+    const iconClass = type === 'success' ? '✓' : '✕';
     
     alertBox.innerHTML = `
-      <div class="alert-icon">✕</div>
-      <div class="alert-message">
-        保存错误：${error.message}
-      </div>
-      <button class="alert-button" onclick="closeAlert(this)">确定</button>
+        <div class="alert-icon">${iconClass}</div>
+        <h3>${title}</h3>
+        <div class="alert-message">${message}</div>
+        <button class="alert-button">确定</button>
     `;
     
-    overlay.appendChild(alertBox);
-    document.body.appendChild(overlay);
-  } finally {
-    // 隐藏加载指示器
-    document.getElementById('loading-spinner').style.display = 'none';
-  }
+    alertOverlay.appendChild(alertBox);
+    document.body.appendChild(alertOverlay);
+    
+    // 绑定关闭事件
+    alertBox.querySelector('.alert-button').addEventListener('click', function() {
+        document.body.removeChild(alertOverlay);
+    });
 }
 
-// 初始化时设置当前月份
-function initMonthSelect() {
-  const currentMonth = new Date().getMonth() + 1;
-  document.getElementById('monthSelect').value = currentMonth;
+// 返回今日打卡视图
+function showAttendanceList() {
+    const statsArea = document.querySelector('.attendance-stats');
+    const attendanceList = document.querySelector('.attendance-list');
+    const signButton = document.querySelector('.sign-button');
+    
+    if (statsArea && attendanceList) {
+        attendanceList.style.display = 'block';
+        statsArea.style.display = 'none';
+        
+        // 检查是否应该显示打卡按钮
+        if (signButton) {
+            const notices = document.querySelectorAll('.notice');
+            let shouldShow = true;
+            
+            for (let notice of notices) {
+                if (notice.textContent.includes('已完成') || 
+                    notice.textContent.includes('非打卡时间') || 
+                    notice.textContent.includes('上班期间严禁打卡')) {
+                    shouldShow = false;
+                    break;
+                }
+            }
+            
+            signButton.style.display = shouldShow ? 'flex' : 'none';
+        }
+    }
 }
 
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-  // 初始化
-  getInfo();
-  setInterval(updateTime, 1000);
-  updateTime();
-  initMonthSelect();
-}); 
+// 关闭定时打卡模态框
+function closeScheduleModal() {
+    const modal = document.getElementById('scheduleModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+} 

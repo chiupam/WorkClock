@@ -1,0 +1,124 @@
+{% extends "admin/index.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block styles %}
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/admin/logs.css">
+<link rel="stylesheet" href="/static/css/admin/statistics.css">
+{% endblock %}
+
+{% block content %}
+<div class="statistics-container">
+    <div class="statistics-header">
+        <h1>考勤统计</h1>
+        <p class="current-time">当前时间: {{ current_time }}</p>
+    </div>
+
+    <div class="statistics-content">
+        <!-- 简单统计卡片 -->
+        <div class="stats-cards">
+            <div class="stats-card" id="today-sign-count">
+                <div class="stats-icon">📝</div>
+                <div class="stats-content">
+                    <div class="stats-value">0</div>
+                    <div class="stats-label">今日打卡次数</div>
+                </div>
+            </div>
+            <div class="stats-card" id="success-rate">
+                <div class="stats-icon">✅</div>
+                <div class="stats-content">
+                    <div class="stats-value">0%</div>
+                    <div class="stats-label">成功率</div>
+                </div>
+            </div>
+            <div class="stats-card" id="this-month-sign">
+                <div class="stats-icon">📅</div>
+                <div class="stats-content">
+                    <div class="stats-value">0</div>
+                    <div class="stats-label">本月打卡次数</div>
+                </div>
+            </div>
+            <div class="stats-card" id="avg-per-day">
+                <div class="stats-icon">📊</div>
+                <div class="stats-content">
+                    <div class="stats-value">0</div>
+                    <div class="stats-label">日均打卡次数</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 签到日志部分 -->
+        <div class="log-section">
+            <h2>签到日志记录</h2>
+            
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="sign-username">用户名:</label>
+                        <input type="text" id="sign-username" placeholder="输入用户名">
+                    </div>
+                    <div class="filter-item">
+                        <label for="sign-date-from">开始日期:</label>
+                        <input type="date" id="sign-date-from">
+                    </div>
+                    <div class="filter-item">
+                        <label for="sign-date-to">结束日期:</label>
+                        <input type="date" id="sign-date-to">
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="sign-type">签到类型:</label>
+                        <select id="sign-type">
+                            <option value="all">全部</option>
+                            <option value="上班打卡">上班打卡</option>
+                            <option value="下班打卡">下班打卡</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="sign-status">状态:</label>
+                        <select id="sign-status">
+                            <option value="all">全部</option>
+                            <option value="成功">成功</option>
+                            <option value="失败">失败</option>
+                        </select>
+                    </div>
+                    <div class="filter-item filter-actions">
+                        <button id="sign-search" class="filter-button">搜索</button>
+                        <button id="sign-reset" class="filter-button reset">重置</button>
+                        <button id="sign-export" class="filter-button export">导出</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="logs-table-wrapper">
+                <table class="logs-table" id="sign-logs-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户名</th>
+                            <th>签到时间</th>
+                            <th>签到类型</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                            <th>IP地址</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 动态加载内容 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="sign-logs-pagination">
+                <!-- 分页控件 -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin/statistics.js"></script>
+{% endblock %} 

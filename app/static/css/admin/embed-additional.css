@@ -1,0 +1,60 @@
+.container {
+    padding-bottom: 20px;
+}
+
+/* 确保头部显示正确 */
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 15px 10px 15px;
+    padding: 10px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stats-header h3 {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-button {
+    background-color: #4a5568;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-button:hover {
+    background-color: #2d3748;
+}
+
+/* 修复统计卡的显示 */
+.statistics-card {
+    display: none !important;
+}
+
+/* 修改容器结构 */
+#user-content {
+    display: flex;
+    flex-direction: column;
+}
+
+#attendance-content {
+    width: 100%;
+} 

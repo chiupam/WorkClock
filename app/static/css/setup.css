@@ -1,0 +1,123 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    line-height: 1.5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+.setup-container {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    padding: 30px;
+}
+.setup-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.setup-header h1 {
+    font-size: 24px;
+    color: #1890ff;
+    margin-bottom: 10px;
+}
+.setup-header p {
+    color: #666;
+    font-size: 14px;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+.form-group input:focus {
+    border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    outline: none;
+}
+.form-group .help-text {
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+}
+.error-message {
+    color: #ff4d4f;
+    font-size: 14px;
+    margin-top: 5px;
+    display: none;
+}
+.submit-btn {
+    width: 100%;
+    background-color: #1890ff;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.submit-btn:hover {
+    background-color: #096dd9;
+}
+.submit-btn:disabled {
+    background-color: #d9d9d9;
+    cursor: not-allowed;
+}
+.message {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    display: none;
+}
+.success-message {
+    background-color: #f6ffed;
+    border: 1px solid #b7eb8f;
+    color: #52c41a;
+}
+.error-message {
+    background-color: #fff2f0;
+    border: 1px solid #ffccc7;
+    color: #ff4d4f;
+}
+.warning-message {
+    background-color: #fffbe6;
+    border: 1px solid #ffe58f;
+    color: #faad14;
+}
+#manual-refresh {
+    margin-top: 10px; 
+    padding: 5px 15px; 
+    background-color: #1890ff; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+#manual-refresh:hover {
+    background-color: #096dd9;
+}

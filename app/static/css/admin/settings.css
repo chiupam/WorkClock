@@ -1,0 +1,144 @@
+/* 设置页面样式 */
+.settings-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.settings-header {
+    margin-bottom: 30px;
+}
+
+.settings-header h1 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.settings-description {
+    color: #666;
+    font-size: 14px;
+}
+
+.settings-form {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #777;
+}
+
+.form-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.btn-primary {
+    background-color: #4a6cf7;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #3a5bd9;
+}
+
+.btn-primary:disabled {
+    background-color: #a4b0e0;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background-color: #e2e2e2;
+}
+
+/* 警告提示样式 */
+.alert {
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.alert-hidden {
+    display: none;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.checkbox-group label {
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.checkbox-group .form-text {
+    display: block;
+    width: 100%;
+    margin-top: 5px;
+    margin-left: 25px;
+}

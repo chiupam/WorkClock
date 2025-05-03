@@ -1,0 +1,123 @@
+{% extends "admin/index.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block styles %}
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/admin/privilege.css">
+<style>
+    .iframe-container {
+        width: 100%;
+        height: 800px; /* 默认高度更高 */
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 20px;
+        display: none;
+        transition: height 0.3s ease;
+    }
+    
+    .iframe-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="privilege-container">
+    <div class="privilege-header">
+        <h1>特权登录</h1>
+        <p class="current-time">当前时间: {{ current_time }}</p>
+    </div>
+
+    <div class="privilege-content">
+        <div class="selection-panel">
+            <div class="selection-group">
+                <label for="department-select">选择部门:</label>
+                <select id="department-select">
+                    <option value="">-- 请选择部门 --</option>
+                </select>
+            </div>
+            
+            <div class="selection-group">
+                <label for="user-select">选择用户:</label>
+                <select id="user-select" disabled>
+                    <option value="">-- 请先选择部门 --</option>
+                </select>
+            </div>
+            
+            <div class="selection-actions">
+                <button id="query-button" class="action-button" disabled>查询</button>
+            </div>
+        </div>
+        
+        <!-- 用户信息内嵌框架 -->
+        <div id="user-iframe-container" class="iframe-container">
+            <iframe id="user-iframe" src="about:blank" frameborder="0"></iframe>
+        </div>
+        
+        <div class="user-info-panel" id="user-info-panel" style="display: none;">
+            <div class="user-basic-info">
+                <div class="user-avatar">
+                    <span class="avatar-placeholder"></span>
+                </div>
+                <div class="user-details">
+                    <h2 id="display-username">用户名</h2>
+                    <p id="display-department">部门: <span></span></p>
+                    <p id="display-position">职位: <span></span></p>
+                    <p id="display-status">状态: <span class="status-badge"></span></p>
+                </div>
+            </div>
+            
+            <div class="sign-actions" id="sign-actions">
+                <div class="sign-card" id="morning-sign">
+                    <h3>上班打卡</h3>
+                    <div class="sign-status" id="morning-sign-status">未打卡</div>
+                    <div class="sign-time" id="morning-sign-time">--:--:--</div>
+                    <button class="sign-button" id="morning-sign-button" disabled>上班打卡</button>
+                </div>
+                
+                <div class="sign-card" id="afternoon-sign">
+                    <h3>下班打卡</h3>
+                    <div class="sign-status" id="afternoon-sign-status">未打卡</div>
+                    <div class="sign-time" id="afternoon-sign-time">--:--:--</div>
+                    <button class="sign-button" id="afternoon-sign-button" disabled>下班打卡</button>
+                </div>
+            </div>
+            
+            <div class="sign-records">
+                <h3>今日打卡记录</h3>
+                <div class="sign-records-list" id="sign-records-list">
+                    <div class="empty-records">暂无打卡记录</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="message-panel" id="message-panel" style="display: none;">
+            <div class="message-content" id="message-content"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin/privilege.js"></script>
+<script>
+    // 监听iframe发送的消息，调整iframe高度
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'resize-iframe') {
+            const iframeContainer = document.getElementById('user-iframe-container');
+            if (iframeContainer) {
+                // 最小高度600px，最大高度1000px
+                const minHeight = 600;
+                const maxHeight = 1000; 
+                const requestedHeight = event.data.height || 800;
+                const newHeight = Math.max(minHeight, Math.min(requestedHeight, maxHeight));
+                iframeContainer.style.height = newHeight + 'px';
+            }
+        }
+    }, false);
+</script>
+{% endblock %} 

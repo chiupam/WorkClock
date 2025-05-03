@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考勤系统 - 考勤统计</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/css/admin/metrics.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div id="loading">
+                <div class="spinner"></div>
+                <div>正在加载考勤统计信息...</div>
+            </div>
+            
+            <div id="stats-content" style="display:none;">
+                <div class="stats-header">
+                    <h3 style="color: white; margin: 0; font-size: 16px;">考勤统计</h3>
+                    <div class="header-buttons">
+                        <select id="monthSelect" class="month-select">
+                            <!-- 月份选项将由JS动态生成 -->
+                        </select>
+                        <button id="back-btn" class="nav-button">返回考勤</button>
+                    </div>
+                </div>
+                
+                <div class="stats-summary">
+                    <div class="summary-title">本月统计<span class="summary-note">（当天考勤结束前不计入统计）</span></div>
+                    <div class="summary-items">
+                        <div class="summary-item">
+                            <span class="item-label">请假：</span>
+                            <span class="item-value" id="leaveDays">0</span>天
+                        </div>
+                        <div class="summary-item">
+                            <span class="item-label">迟到：</span>
+                            <span class="item-value" id="lateNumber">0</span>次
+                        </div>
+                        <div class="summary-item">
+                            <span class="item-label">早退：</span>
+                            <span class="item-value" id="ztNumber">0</span>次
+                        </div>
+                        <div class="summary-item">
+                            <span class="item-label">缺卡：</span>
+                            <span class="item-value" id="lackCarNumber">0</span>次
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>日</th>
+                                <th>一</th>
+                                <th>二</th>
+                                <th>三</th>
+                                <th>四</th>
+                                <th>五</th>
+                                <th>六</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsTableBody">
+                            <!-- 表格内容将由JS动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/static/js/admin/metrics.js"></script>
+</body>
+</html>

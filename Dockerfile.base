@@ -1,34 +1,27 @@
-# 构建阶段
-FROM python:3.9-alpine3.15 AS builder
+FROM python:3.10-alpine
 
-WORKDIR /build
+# 设置工作目录
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on
+
+# 设置时区
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" > /etc/timezone && \
+    apk update && \
+    apk add --no-cache build-base libffi-dev openssl-dev nodejs npm bash git rsync && \
+    npm install pm2 -g && \
+    npm cache clean --force
+
+# 复制依赖文件
 COPY requirements.txt .
 
-RUN apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev && \
-    pip install --no-cache-dir --upgrade pip && \
-    pip wheel --no-cache-dir --wheel-dir=/wheels -r requirements.txt
-
-# 运行阶段
-FROM python:3.9-alpine3.15
-
-WORKDIR /app
-ENV FLASK_APP=run.py \
-    FLASK_DEBUG=0 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    TZ=Asia/Shanghai \
-    PATH="/usr/local/bin:$PATH"
-
-# 复制并安装依赖
-COPY --from=builder /wheels /wheels
-RUN apk add --no-cache tzdata musl-dev libffi-dev linux-headers && \
-    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    pip install --no-cache-dir /wheels/* && \
-    rm -rf /wheels && \
-    mkdir -p instance && \
-    chmod 777 instance && \
-    mkdir -p /app/repo /app/temp_extract && \
-    chmod 755 /app/repo /app/temp_extract
-
-# 这是一个基础镜像，不包含应用代码
-# 标签说明：此镜像供 chiupam/workclock:base 使用 
+# 安装依赖并清理缓存（单层）
+RUN pip install --no-cache-dir -r requirements.txt uvicorn && \
+    apk del build-base && \
+    rm -rf /var/cache/apk/*

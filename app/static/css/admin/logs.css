@@ -1,0 +1,252 @@
+/* 日志页面样式 */
+.logs-container {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.logs-header h1 {
+    font-size: 24px;
+    color: #333;
+    margin: 0;
+}
+
+.current-time {
+    color: #666;
+    font-size: 14px;
+}
+
+/* 选项卡导航样式 */
+.logs-tabs {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.tab-buttons {
+    display: flex;
+    background-color: #f0f2f5;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    color: #666;
+    transition: background-color 0.3s, color 0.3s;
+    text-align: center;
+}
+
+.tab-button:hover {
+    background-color: #e8e8e8;
+    color: #333;
+}
+
+.tab-button.active {
+    background-color: #fff;
+    color: #2196F3;
+    border-bottom: 2px solid #2196F3;
+}
+
+/* 选项卡内容样式 */
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 筛选区域样式 */
+.filter-section {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.filter-row:last-child {
+    margin-bottom: 0;
+}
+
+.filter-item {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-item label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #555;
+}
+
+.filter-item input,
+.filter-item select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
+    border-color: #2196F3;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.filter-button {
+    padding: 8px 16px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.filter-button:hover {
+    background-color: #1976D2;
+}
+
+.filter-button.reset {
+    background-color: #607D8B;
+}
+
+.filter-button.reset:hover {
+    background-color: #455A64;
+}
+
+.filter-button.export {
+    background-color: #4CAF50;
+}
+
+.filter-button.export:hover {
+    background-color: #388E3C;
+}
+
+/* 表格样式 */
+.logs-table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 14px;
+}
+
+.logs-table th,
+.logs-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.logs-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+    position: sticky;
+    top: 0;
+}
+
+.logs-table tbody tr:hover {
+    background-color: #f5f9ff;
+}
+
+.logs-table .success {
+    color: #4CAF50;
+}
+
+.logs-table .failure {
+    color: #F44336;
+}
+
+/* 分页控件样式 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.pagination-button {
+    padding: 6px 12px;
+    background-color: #f0f2f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.pagination-button:hover {
+    background-color: #e0e0e0;
+}
+
+.pagination-button.active {
+    background-color: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.pagination-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #666;
+    margin: 0 10px;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+    .filter-item {
+        min-width: 100%;
+    }
+    
+    .tab-button {
+        padding: 10px 5px;
+        font-size: 14px;
+    }
+} 

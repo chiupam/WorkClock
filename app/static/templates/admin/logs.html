@@ -1,0 +1,226 @@
+{% extends "admin/index.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block styles %}
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/admin/logs.css">
+{% endblock %}
+
+{% block content %}
+<div class="logs-container">
+    <div class="logs-header">
+        <h1>系统日志查看</h1>
+        <p class="current-time">当前时间: {{ current_time }}</p>
+    </div>
+
+    <div class="logs-tabs">
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="operation-logs">操作日志</button>
+            <button class="tab-button" data-tab="login-logs">登录日志</button>
+            <button class="tab-button" data-tab="sign-logs">签到日志</button>
+        </div>
+        
+        <!-- 操作日志内容 -->
+        <div class="tab-content active" id="operation-logs">
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="operation-username">用户名:</label>
+                        <input type="text" id="operation-username" placeholder="输入用户名">
+                    </div>
+                    <div class="filter-item">
+                        <label for="operation-date-from">开始日期:</label>
+                        <input type="date" id="operation-date-from">
+                    </div>
+                    <div class="filter-item">
+                        <label for="operation-date-to">结束日期:</label>
+                        <input type="date" id="operation-date-to">
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="operation-type">操作类型:</label>
+                        <select id="operation-type">
+                            <option value="all">全部</option>
+                            {% for key, value in log_types.items() %}
+                                {% if key[0] != '_' %}
+                                <option value="{{ value }}">{{ value }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="operation-status">状态:</label>
+                        <select id="operation-status">
+                            <option value="all">全部</option>
+                            <option value="成功">成功</option>
+                            <option value="失败">失败</option>
+                        </select>
+                    </div>
+                    <div class="filter-item filter-actions">
+                        <button id="operation-search" class="filter-button">搜索</button>
+                        <button id="operation-reset" class="filter-button reset">重置</button>
+                        <button id="operation-export" class="filter-button export">导出</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="logs-table-wrapper">
+                <table class="logs-table" id="operation-logs-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户名</th>
+                            <th>操作时间</th>
+                            <th>操作类型</th>
+                            <th>操作详情</th>
+                            <th>状态</th>
+                            <th>IP地址</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 动态加载内容 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="operation-logs-pagination">
+                <!-- 分页控件 -->
+            </div>
+        </div>
+        
+        <!-- 登录日志内容 -->
+        <div class="tab-content" id="login-logs">
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="login-username">用户名:</label>
+                        <input type="text" id="login-username" placeholder="输入用户名">
+                    </div>
+                    <div class="filter-item">
+                        <label for="login-user-id">用户ID:</label>
+                        <input type="text" id="login-user-id" placeholder="输入用户ID">
+                    </div>
+                    <div class="filter-item">
+                        <label for="login-date-from">开始日期:</label>
+                        <input type="date" id="login-date-from">
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="login-date-to">结束日期:</label>
+                        <input type="date" id="login-date-to">
+                    </div>
+                    <div class="filter-item">
+                        <label for="login-status">状态:</label>
+                        <select id="login-status">
+                            <option value="all">全部</option>
+                            <option value="成功">成功</option>
+                            <option value="失败">失败</option>
+                        </select>
+                    </div>
+                    <div class="filter-item filter-actions">
+                        <button id="login-search" class="filter-button">搜索</button>
+                        <button id="login-reset" class="filter-button reset">重置</button>
+                        <button id="login-export" class="filter-button export">导出</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="logs-table-wrapper">
+                <table class="logs-table" id="login-logs-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户ID</th>
+                            <th>用户名</th>
+                            <th>登录时间</th>
+                            <th>IP地址</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 动态加载内容 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="login-logs-pagination">
+                <!-- 分页控件 -->
+            </div>
+        </div>
+        
+        <!-- 签到日志内容 -->
+        <div class="tab-content" id="sign-logs">
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="sign-username">用户名:</label>
+                        <input type="text" id="sign-username" placeholder="输入用户名">
+                    </div>
+                    <div class="filter-item">
+                        <label for="sign-date-from">开始日期:</label>
+                        <input type="date" id="sign-date-from">
+                    </div>
+                    <div class="filter-item">
+                        <label for="sign-date-to">结束日期:</label>
+                        <input type="date" id="sign-date-to">
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="sign-type">签到类型:</label>
+                        <select id="sign-type">
+                            <option value="all">全部</option>
+                            <option value="上班打卡">上班打卡</option>
+                            <option value="下班打卡">下班打卡</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="sign-status">状态:</label>
+                        <select id="sign-status">
+                            <option value="all">全部</option>
+                            <option value="成功">成功</option>
+                            <option value="失败">失败</option>
+                        </select>
+                    </div>
+                    <div class="filter-item filter-actions">
+                        <button id="sign-search" class="filter-button">搜索</button>
+                        <button id="sign-reset" class="filter-button reset">重置</button>
+                        <button id="sign-export" class="filter-button export">导出</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="logs-table-wrapper">
+                <table class="logs-table" id="sign-logs-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户名</th>
+                            <th>签到时间</th>
+                            <th>签到类型</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                            <th>IP地址</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 动态加载内容 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="sign-logs-pagination">
+                <!-- 分页控件 -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin/logs.js"></script>
+{% endblock %} 
