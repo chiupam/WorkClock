@@ -38,16 +38,13 @@ class AdminPathMiddleware(BaseHTTPMiddleware):
                 # 检查是否发生了重定向到根路由
                 if (response.status_code in (302, 303, 307, 308) and 
                     str(response.headers.get("location", "")).rstrip("/") == ""):
-                    logger.info("AdminPathMiddleware: 检测到重定向到根路由")
                     # 检查是否删除了open_id cookie
                     cookie_header = response.headers.get("Set-Cookie", "")
                     if "open_id=; " in cookie_header or "open_id=;" in cookie_header:
                         # 有删除cookie的操作，允许重定向
-                        logger.info("AdminPathMiddleware: 检测到cookie删除，允许重定向")
                         return response
                     else:
                         # 没有删除cookie，删除cookie
-                        logger.info("AdminPathMiddleware: 未检测到cookie删除，强制删除cookie")
                         response = RedirectResponse(url="/", status_code=303)
                         response.delete_cookie(key="open_id", path="/")
                         return response

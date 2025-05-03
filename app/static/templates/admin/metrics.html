@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/css/admin/metrics.css">
 </head>
+
 <body>
     <div class="container">
         <div class="main-content">
@@ -14,10 +16,10 @@
                 <div class="spinner"></div>
                 <div>正在加载考勤统计信息...</div>
             </div>
-            
+
             <div id="stats-content" style="display:none;">
                 <div class="stats-header">
-                    <h3 style="color: white; margin: 0; font-size: 16px;">考勤统计</h3>
+                    <h3>考勤统计</h3>
                     <div class="header-buttons">
                         <select id="monthSelect" class="month-select">
                             <!-- 月份选项将由JS动态生成 -->
@@ -25,7 +27,7 @@
                         <button id="back-btn" class="nav-button">返回考勤</button>
                     </div>
                 </div>
-                
+
                 <div class="stats-summary">
                     <div class="summary-title">本月统计<span class="summary-note">（当天考勤结束前不计入统计）</span></div>
                     <div class="summary-items">
@@ -47,7 +49,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="stats-table">
                     <table>
                         <thead>
@@ -73,4 +75,5 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="/static/js/admin/metrics.js"></script>
 </body>
+
 </html>

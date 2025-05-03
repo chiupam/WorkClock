@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,26 +9,29 @@
     <link rel="stylesheet" href="/static/css/admin/embed.css">
     <link rel="stylesheet" href="/static/css/admin/embed-additional.css">
 </head>
+
 <body>
     <div class="container">
         <div class="main-content">
             <!-- 页面标题由JavaScript动态添加 -->
-            
+
             <div id="loading">
                 <div class="spinner"></div>
                 <div>正在加载用户信息...</div>
             </div>
-            
+
             <div id="user-content" style="display:none;">
                 <!-- 添加考勤操作按钮 -->
                 <div class="stats-header">
-                    <h3 style="color: white; margin: 0; font-size: 16px;">考勤记录</h3>
+                    <h3
+                        style="color: #333333; margin: 0; font-size: 16px; background-color: #f0f0f0; padding: 5px 10px; border-radius: 4px;">
+                        考勤记录</h3>
                     <div class="header-buttons">
                         <button id="stats-btn" class="nav-button">考勤统计</button>
                         <button id="schedule-btn" class="nav-button">添加定时</button>
                     </div>
                 </div>
-                
+
                 <div id="attendance-content" style="background-color: white; border-radius: 8px; padding: 15px;"></div>
             </div>
         </div>
@@ -37,4 +41,5 @@
     <script src="/static/js/admin/embed.js"></script>
     <script src="/static/js/admin/embed-ui.js"></script>
 </body>
-</html> 
+
+</html>
