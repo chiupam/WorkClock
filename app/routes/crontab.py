@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from app import logger, CRON_DB_FILE, USER_DB_FILE
 from app.auth.dependencies import is_valid_open_id
 from app.auth.utils import get_mobile_user_agent
-from app.routes.index import get_attendance_info, check_is_workday, show_sign_button
+from app.routes.index import get_attendance_info, show_sign_button
 from app.routes.statistics import GetYueTjList
 from app.utils.host import build_api_url
 from app.utils.log import log_sign_activity, log_operation, LogType
@@ -87,7 +87,6 @@ async def auto_sign(user_id: str):
     try:
         user_info = get_user_info(user_id)
         if not user_info:
-            logger.error(f"无法获取用户信息: {user_id}")
             # 记录自动打卡错误日志
             await log_operation(
                 "系统自动",
@@ -96,14 +95,13 @@ async def auto_sign(user_id: str):
                 "Auto Task",
                 False
             )
-            return
+            return logger.error(f"无法获取用户信息: {user_id}")
             
         username = user_info.get("username", "未知用户")
         user_id = user_info.get("user_id", user_id)
         dep_id = user_info.get("department_id", None)
         
         if not dep_id:
-            logger.error(f"用户 {user_id} 没有部门ID")
             # 记录自动打卡错误日志
             await log_operation(
                 username,
@@ -112,90 +110,64 @@ async def auto_sign(user_id: str):
                 "Auto Task",
                 False
             )
-            return
+            return logger.error(f"用户 {user_id} 没有部门ID")
             
         # 确定打卡类型（根据时间判断是上班还是下班打卡）
         now = datetime.datetime.now()
         current_hour = now.hour
         sign_type = "上班打卡" if current_hour < 12 else "下班打卡"
         
-        # 记录开始自动打卡日志
-        await log_operation(
-            username,
-            LogType.CRON,
-            f"开始自动{sign_type}",
-            "Auto Task",
-            True
-        )
-        
-        # now = datetime.datetime.now()
-        # ua = get_mobile_user_agent()
-        # yue_tj_list = await GetYueTjList({'User-Agent': ua}, user_id, str(now.year), str(now.month).zfill(2))
-        # is_workday = yue_tj_list[now.day - 1].get("workday") == 1
-        # if not is_workday:
-        #     logger.info("今天是休息日，无需打卡")
-        # else:
-        #     attendance_data = await get_attendance_info(ua, user_id)
-        #     show_sign_btn = show_sign_button(attendance_data)
-        #     if show_sign_btn["show"]:
-        #         logger.info(show_sign_btn["message"])
-        #         url = build_api_url("/AttendanceCard/SaveAttCheckinout")
-        #         headers = {"User-Agent": ua}
-        #         data = {"model": {"Aid": 0, "UnitCode": "530114", "userID": user_id, "userDepID": dep_id, "Mid": 134, "Num_RunID": 14, "lng": "", "lat": "", "realaddress": "呈贡区人民检察院", "iSDelete": 0, "administratorChangesRemark": "呈贡区人民检察院"}, "AttType": 1}
-        #         # 实际环境中解除注释，返回真实API响应
-        #         async with httpx.AsyncClient() as client:
-        #             response = await client.post(url, json=data, headers=headers)
-        #             result = response.json()
-        #             logger.info(f"打卡: {result.get('success'), False} | 信息: {result.get('message', '未知错误')}")
-                     
-        #             # 记录打卡日志
-        #             await log_sign_activity(
-        #                 username,
-        #                 sign_type,
-        #                 result.get('success', False),
-        #                 f"自动打卡: {result.get('message', '未知错误')}",
-        #                 "Auto Task"
-        #             )
-        #             
-        #             # 记录操作日志
-        #             await log_operation(
-        #                 username,
-        #                 LogType.CRON,
-        #                 f"自动{sign_type}结果: {result.get('message', '未知错误')}",
-        #                 "Auto Task",
-        #                 result.get('success', False)
-        #             )
-
-        # 测试环境
-        url = build_api_url("/AttendanceCard/SaveAttCheckinout")
+        now = datetime.datetime.now()
         headers = {"User-Agent": get_mobile_user_agent()}
-        data = {"model": {"Aid": 0, "UnitCode": "530114", "userID": user_id, "userDepID": dep_id, "Mid": 134, "Num_RunID": 14, "lng": "", "lat": "", "realaddress": "呈贡区人民检察院", "iSDelete": 0, "administratorChangesRemark": "呈贡区人民检察院"}, "AttType": 1}
+        yue_tj_list = await GetYueTjList(headers, user_id, str(now.year), str(now.month).zfill(2))
+        is_workday = yue_tj_list[now.day - 1].get("isholiday") == 0
+        if not is_workday:
+            return logger.info("今天是休息日，无需打卡")
         
+        attendance_data = await get_attendance_info(headers.get("User-Agent"), user_id)
+        show_sign_btn = show_sign_button(attendance_data)
+        if not show_sign_btn["show"]:
+            return logger.warning(show_sign_btn["message"])
+        
+        url = build_api_url("/AttendanceCard/SaveAttCheckinout")
+        data = {
+            "model": {
+                "Aid": 0,
+                "UnitCode": "530114",
+                "userID": user_id,
+                "userDepID": dep_id,
+                "Mid": 134,
+                "Num_RunID": 14,
+                "lng": "",
+                "lat": "",
+                "realaddress": "呈贡区人民检察院",
+                "iSDelete": 0,
+                "administratorChangesRemark": "呈贡区人民检察院"
+            },
+            "AttType": 1
+        }
+        # 实际环境中解除注释，返回真实API响应
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json=data, headers=headers)
             result = response.json()
-            success = result.get("success", False) 
-            message = result.get("message", "未知错误")
             
-            logger.info(f"自动打卡: {user_id} {sign_type} - 结果: {success} | 信息: {message}")
-            
-            # 记录打卡日志
-            await log_sign_activity(
-                username,
-                sign_type,
-                success,
-                f"自动打卡: {message}",
-                "Auto Task"
-            )
-            
-            # 记录操作日志
-            await log_operation(
-                username,
-                LogType.CRON,
-                f"自动{sign_type}结果: {message}",
-                "Auto Task",
-                success
-            )
+        # 记录打卡日志
+        await log_sign_activity(
+            username,
+            sign_type,
+            result.get('success', False),
+            f"自动打卡: {result.get('message', '未知错误')}",
+            "Auto Task"
+        )
+        
+        # 记录操作日志
+        await log_operation(
+            username,
+            LogType.CRON,
+            f"自动{sign_type}结果: {result.get('message', '未知错误')}",
+            "Auto Task",
+            result.get('success', False)
+        )
                 
     except Exception as e:
         error_msg = f"自动打卡出错: {str(e)}"

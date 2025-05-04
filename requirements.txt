@@ -11,3 +11,6 @@ python-dotenv
 bcrypt
 httpx
 apscheduler
+xterm
+websocket
+wsproto

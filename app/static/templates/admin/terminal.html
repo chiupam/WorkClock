@@ -1,0 +1,104 @@
+{% extends "admin/index.html" %}
+
+{% block title %}系统终端{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/xterm.css">
+<style>
+    .terminal-container {
+        background-color: #1e1e1e;
+        border-radius: 6px;
+        overflow: hidden;
+        height: calc(100vh - 230px);
+        min-height: 500px;
+        margin: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .terminal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 16px;
+        background-color: #333;
+        color: white;
+        border-bottom: 1px solid #555;
+    }
+
+    .terminal-header h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    .terminal-controls {
+        display: flex;
+        gap: 8px;
+    }
+
+    .terminal-controls button {
+        background-color: #444;
+        color: white;
+        border: none;
+        padding: 5px 12px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-size: 12px;
+    }
+
+    .terminal-controls button:hover {
+        background-color: #555;
+    }
+
+    #terminal {
+        height: calc(100% - 42px);
+        padding: 8px;
+    }
+
+    /* 确保内容区域没有额外的内边距 */
+    .admin-content {
+        padding: 20px;
+    }
+
+    /* 确保卡片没有额外边距 */
+    .card {
+        margin: 0;
+    }
+
+    /* 确保内容区域有足够的高度 */
+    .content-body {
+        height: calc(100vh - 160px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>系统终端</h1>
+    <p>在浏览器中执行系统命令</p>
+</div>
+
+<div class="content-body">
+    <div class="card">
+        <div class="card-content" style="height: 100%; padding: 0;">
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <h2>终端</h2>
+                    <div class="terminal-controls">
+                        <button id="clearTerminal">清空</button>
+                        <button id="disconnectTerminal">断开连接</button>
+                    </div>
+                </div>
+                <div id="terminal"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/xterm.js"></script>
+<script src="/static/js/xterm-addon-fit.js"></script>
+<script src="/static/js/terminal.js"></script>
+{% endblock %}

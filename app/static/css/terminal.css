@@ -1,0 +1,68 @@
+.terminal-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    min-height: 400px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #1e1e1e;
+}
+
+.terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: #333;
+    color: white;
+    border-bottom: 1px solid #555;
+}
+
+.terminal-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.terminal-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.terminal-controls button {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.terminal-controls button:hover {
+    background-color: #555;
+}
+
+#terminal {
+    flex: 1;
+    padding: 8px;
+    height: 100%;
+    width: 100%;
+    min-height: 350px;
+}
+
+/* 使终端占满可用空间 */
+body,
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+    padding: 16px;
+    box-sizing: border-box;
+    background-color: #f5f5f5;
+}

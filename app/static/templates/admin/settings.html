@@ -13,9 +13,9 @@
         <h1>系统设置</h1>
         <p class="settings-description">在这里管理系统的全局设置参数</p>
     </div>
-    
+
     <div id="alert" class="alert alert-hidden"></div>
-    
+
     <div class="settings-form">
         <form id="settings-form">
             <div class="form-group">
@@ -23,29 +23,37 @@
                 <input type="text" id="system_name" name="system_name" class="form-control" placeholder="考勤管理系统">
                 <small class="form-text">设置显示在页面标题和页脚的系统名称</small>
             </div>
-            
+
             <div class="form-group">
                 <label for="api_host" class="form-label">API主机地址</label>
                 <input type="text" id="api_host" name="api_host" class="form-control" placeholder="api.example.com">
                 <small class="form-text">设置外部API服务器地址，不要包含http://或https://</small>
             </div>
-            
+
             <div class="form-group">
                 <label for="admin_password" class="form-label">管理员密码</label>
-                <input type="password" id="admin_password" name="admin_password" class="form-control" placeholder="不修改请留空">
+                <input type="password" id="admin_password" name="admin_password" class="form-control"
+                    placeholder="不修改请留空">
                 <small class="form-text">设置管理员登录密码，留空表示不修改</small>
             </div>
-            
+
             <div class="form-group">
                 <label for="fuck_password" class="form-label">补卡密码</label>
-                <input type="password" id="fuck_password" name="fuck_password" class="form-control" placeholder="不修改请留空">
+                <input type="password" id="fuck_password" name="fuck_password" class="form-control"
+                    placeholder="不修改请留空">
                 <small class="form-text">设置用户补卡密码，留空表示不修改</small>
             </div>
-            
+
             <div class="form-actions">
                 <button type="button" onclick="resetForm()" class="btn btn-secondary">重置</button>
                 <button type="button" onclick="saveSettings()" class="btn btn-primary">保存设置</button>
-                <button type="button" onclick="updateCode()" class="btn btn-warning">更新项目代码</button>
+                <div class="update-options">
+                    <button type="button" onclick="updateCode(event)" class="btn btn-warning">更新项目</button>
+                    <label class="update-checkbox-label">
+                        <input type="checkbox" id="force_update" name="force_update">
+                        <span class="checkbox-text">强制更新</span>
+                    </label>
+                </div>
             </div>
         </form>
     </div>

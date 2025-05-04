@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,11 +11,12 @@
     <!-- 添加axios库 -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
+
 <body>
     <div class="admin-layout">
         <!-- 侧边栏遮罩层 -->
         <div class="sidebar-overlay"></div>
-        
+
         <!-- 侧边导航 -->
         <div class="admin-sidebar">
             <div class="sidebar-header">
@@ -23,43 +25,49 @@
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li {% if request.url.path == '/admin/dashboard' %}class="active"{% endif %}>
+                    <li {% if request.url.path=='/admin/dashboard' %}class="active" {% endif %}>
                         <a href="/admin/dashboard">
                             <span class="icon">📊</span>
                             <span class="label">仪表盘</span>
                         </a>
                     </li>
-                    <li {% if request.url.path == '/admin/users' %}class="active"{% endif %}>
+                    <li {% if request.url.path=='/admin/users' %}class="active" {% endif %}>
                         <a href="/admin/users">
                             <span class="icon">👥</span>
                             <span class="label">用户管理</span>
                         </a>
                     </li>
-                    <li {% if request.url.path == '/admin/statistics' %}class="active"{% endif %}>
+                    <li {% if request.url.path=='/admin/statistics' %}class="active" {% endif %}>
                         <a href="/admin/statistics">
                             <span class="icon">📈</span>
                             <span class="label">考勤统计</span>
                         </a>
                     </li>
-                    <li {% if request.url.path == '/admin/privilege' %}class="active"{% endif %}>
+                    <li {% if request.url.path=='/admin/privilege' %}class="active" {% endif %}>
                         <a href="/admin/privilege">
                             <span class="icon">🔑</span>
                             <span class="label">特权登录</span>
                         </a>
                     </li>
-                    <li {% if request.url.path == '/admin/schedules' %}class="active"{% endif %}>
+                    <li {% if request.url.path=='/admin/schedules' %}class="active" {% endif %}>
                         <a href="/admin/schedules">
                             <span class="icon">⏰</span>
                             <span class="label">定时任务</span>
                         </a>
                     </li>
-                    <li {% if request.url.path == '/admin/logs' %}class="active"{% endif %}>
+                    <li {% if request.url.path=='/admin/logs' %}class="active" {% endif %}>
                         <a href="/admin/logs">
                             <span class="icon">📝</span>
                             <span class="label">系统日志</span>
                         </a>
                     </li>
-                    <li {% if request.url.path == '/admin/settings' %}class="active"{% endif %}>
+                    <li {% if request.url.path=='/admin/terminal' %}class="active" {% endif %}>
+                        <a href="/admin/terminal">
+                            <span class="icon">💻</span>
+                            <span class="label">系统终端</span>
+                        </a>
+                    </li>
+                    <li {% if request.url.path=='/admin/settings' %}class="active" {% endif %}>
                         <a href="/admin/settings">
                             <span class="icon">⚙️</span>
                             <span class="label">系统设置</span>
@@ -74,7 +82,7 @@
                 </a>
             </div>
         </div>
-        
+
         <!-- 主内容区 -->
         <div class="admin-main">
             <!-- 顶部导航 -->
@@ -93,33 +101,34 @@
                     </div>
                 </div>
             </header>
-            
+
             <!-- 主要内容 -->
             <main class="admin-content">
                 {% block content %}{% endblock %}
             </main>
-            
+
             <!-- 页脚 -->
             <footer class="admin-footer">
                 <p>&copy; {{ stats.system_name | default('考勤管理系统') }} {{ stats.system_version | default('1.0.0') }}</p>
             </footer>
         </div>
     </div>
-    
+
     <script src="/static/js/admin/common.js"></script>
     <script>
-    // 使用axios处理退出登录
-    function handleLogout() {
-        axios.post('/auth/logout')
-            .then(function(response) {
-                window.location.href = '/';
-            })
-            .catch(function(error) {
-                console.error('退出登录失败:', error);
-                alert('退出登录失败，请重试');
-            });
-    }
+        // 使用axios处理退出登录
+        function handleLogout() {
+            axios.post('/auth/logout')
+                .then(function (response) {
+                    window.location.href = '/';
+                })
+                .catch(function (error) {
+                    console.error('退出登录失败:', error);
+                    alert('退出登录失败，请重试');
+                });
+        }
     </script>
     {% block scripts %}{% endblock %}
 </body>
+
 </html>

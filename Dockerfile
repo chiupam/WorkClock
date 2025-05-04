@@ -6,7 +6,7 @@ WORKDIR /app
 # 复制应用代码
 COPY . .
 
-# 创建数据目录并设置入口点脚本权限（单层）
+# 创建空的数据目录并设置入口点脚本权限（单层）
 RUN mkdir -p data && \
     chmod +x *.sh
 

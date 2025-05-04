@@ -6,6 +6,9 @@
 Dockerfile.base
 .dockerignore.base
 
+# 应用数据目录 - 避免将数据打包进镜像
+data/
+
 # Python
 __pycache__/
 *.py[cod]

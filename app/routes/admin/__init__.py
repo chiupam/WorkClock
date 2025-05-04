@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.routes.admin import dashboard, settings, logs, schedules, statistics, privilege, system
+from app.routes.admin import dashboard, settings, logs, schedules, statistics, privilege, system, terminal
 
 
 
@@ -14,3 +14,4 @@ router.include_router(schedules.router)
 router.include_router(statistics.router)
 router.include_router(privilege.router)
 router.include_router(system.router) 
+router.include_router(terminal.router) 

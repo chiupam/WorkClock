@@ -252,10 +252,34 @@ async def update_project_code(request: Request):
     从github拉取最新代码并部署
     """
     try:
-        logger.info("收到更新项目代码请求")
+        # 获取请求数据，如果解析失败则使用默认值
+        force_update = False
+        try:
+            data = await request.json()
+            force_update = data.get("force_update", False)
+        except Exception:
+            # JSON解析失败，使用默认值
+            logger.warning("JSON解析失败，使用默认force_update=False")
+        
+        logger.info(f"收到更新项目代码请求，强制更新：{force_update}")
         
         # 创建repo目录（如果不存在）
         repo_dir = os.path.join(os.getcwd(), "repo")
+        
+        # 如果选择强制更新，则删除整个repo目录
+        if force_update and os.path.exists(repo_dir):
+            logger.info("强制更新模式：删除现有repo目录")
+            # 使用subprocess而不是shutil以支持各种环境
+            delete_cmd = f"rm -rf {repo_dir}"
+            subprocess.run(
+                delete_cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False
+            )
+        
+        # 重新创建repo目录（如果不存在）
         if not os.path.exists(repo_dir):
             os.makedirs(repo_dir)
             logger.info(f"创建repo目录: {repo_dir}")
@@ -284,7 +308,8 @@ async def update_project_code(request: Request):
         else:
             # 仓库已存在，执行git pull
             logger.info("仓库已存在，执行拉取操作")
-            pull_cmd = f"cd {repo_dir} && git pull"
+            # 添加--force选项强制覆盖本地修改
+            pull_cmd = f"cd {repo_dir} && git fetch --all && git reset --hard origin/main && git pull"
             pull_result = subprocess.run(
                 pull_cmd,
                 shell=True,
