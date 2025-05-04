@@ -5,19 +5,16 @@ import signal
 import struct
 import fcntl
 import termios
-import json
 import asyncio
 import uuid
 import sqlite3
 import time
 import subprocess
 from typing import Dict, Any
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Cookie, Request
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Request
 from starlette.websockets import WebSocketState
-from starlette.responses import FileResponse
 from app import USER_DB_FILE, logger
 from app.auth.dependencies import admin_required
-from pathlib import Path
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter(tags=["终端"])

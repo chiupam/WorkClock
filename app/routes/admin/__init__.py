@@ -1,7 +1,6 @@
 from fastapi import APIRouter
+
 from app.routes.admin import dashboard, settings, logs, schedules, statistics, privilege, system, terminal
-
-
 
 # 创建主路由器
 router = APIRouter(tags=["管理员"])

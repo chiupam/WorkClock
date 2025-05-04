@@ -1,31 +1,13 @@
 import datetime
+import httpx
 import sqlite3
-
 from fastapi.templating import Jinja2Templates
 
-from app import USER_DB_FILE, SET_DB_FILE
+from app import USER_DB_FILE, SET_DB_FILE, logger
+from config import settings
 
 # 设置模板
 templates = Jinja2Templates(directory="app/static/templates")
-
-# 部门信息常量（仅后端可见）
-DEPARTMENTS = {
-    "3": "院领导",
-    "7": "政治部",
-    "11": "办公室",
-    "10": "综合业务部",
-    "8": "第一检察部",
-    "9": "第二检察部",
-    "4": "第三检察部",
-    "5": "第四检察部",
-    "12": "第五检察部",
-    "15": "未成年人检察组",
-    "6": "待入职人员",
-    "13": "检委办",
-    "2": "系统管理员",
-    "1": "测试部门",
-    "14": "退休离职人员"
-}
 
 async def update_admin_active_time(open_id: str):
     """
@@ -90,9 +72,13 @@ async def get_admin_stats():
         system_name = result[0] if result else "考勤管理系统"
         
         conn_set.close()
-        
+
         from config import settings
-        
+
+        # ToDo：暂时想不出什么好的解决方法，每次都获取版本号也不是办法
+        # app_version = await get_latest_github_tag()
+        app_version = settings.APP_VERSION
+
         # 返回统计信息
         return {
             "total_users": total_users,
@@ -101,7 +87,7 @@ async def get_admin_stats():
             "active_users_month": active_users_month,
             "today_logins": today_logins,
             "system_name": system_name,
-            "system_version": settings.APP_VERSION,
+            "system_version": app_version if app_version else settings.APP_VERSION,
             "system_start_time": datetime.datetime.fromtimestamp(settings.START_TIME).strftime("%Y-%m-%d %H:%M:%S") if hasattr(settings, "START_TIME") else "未知"
         }
     except Exception as e:
@@ -133,3 +119,32 @@ async def get_admin_name(open_id: str) -> str:
     conn.close()
     
     return admin_info[0] if admin_info else "管理员" 
+
+async def get_latest_github_tag() -> str:
+    url = settings.GIT_REPO
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    app_version = settings.APP_VERSION
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            tags = response.json()
+
+            if isinstance(tags, list) and tags:
+                app_version = tags[0].get("name", app_version)
+            else:
+                logger.error("获取 GitHub 标签失败（返回为空或格式错误），使用默认标签")
+
+    
+    except httpx.TimeoutException:
+        logger.error("请求 GitHub 标签时发生超时")
+
+    except httpx.RequestError as exc:
+        logger.error(f"请求 GitHub 标签时发生网络错误: {exc!r}")
+
+    except httpx.HTTPStatusError as exc:
+        logger.error(f"GitHub 返回错误响应: {exc.response.status_code} - {exc.response.text}")
+
+    return app_version
+    

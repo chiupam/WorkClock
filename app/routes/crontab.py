@@ -1,15 +1,15 @@
 import ast
-import sqlite3
+import asyncio
 import datetime
-from typing import Optional, List
-
 import httpx
+import sqlite3
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import APIRouter, Request, Cookie
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from typing import Optional, List
 
 from app import logger, CRON_DB_FILE, USER_DB_FILE
 from app.auth.dependencies import is_valid_open_id
@@ -19,7 +19,6 @@ from app.routes.statistics import GetYueTjList
 from app.utils.host import build_api_url
 from app.utils.log import log_sign_activity, log_operation, LogType
 from config import settings
-import asyncio
 
 # 创建路由器
 router = APIRouter(tags=["定时"])
@@ -452,7 +451,10 @@ async def save_schedule(request: Request, schedule_req: ScheduleRequest, open_id
         afternoon_status = 0
     
     # 准备日志详情
-    log_details = f"定时设置: 早上({morning_status}): {morning_time}, 下午({afternoon_status}): {afternoon_time}"
+    log_details = (
+        f"早上: {'、'.join(morning_time) if morning_status == 1 and morning_time else '无'}，"
+        f"下午: {'、'.join(afternoon_time) if afternoon_status == 1 and afternoon_time else '无'}"
+    )
     
     try:
         if schedule:

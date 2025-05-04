@@ -1,15 +1,11 @@
 import datetime
-import httpx
 import sqlite3
-
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from app import USER_DB_FILE, logger
 from app.auth.dependencies import admin_required
-from app.routes.admin.utils import get_admin_stats, update_admin_active_time, get_admin_name, templates, DEPARTMENTS
-from app.auth.utils import get_mobile_user_agent
-from app.utils.host import build_api_url
+from app.routes.admin.utils import get_admin_stats, get_admin_name, templates
 
 # 创建路由器
 router = APIRouter()

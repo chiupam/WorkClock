@@ -55,8 +55,9 @@ class Settings(BaseSettings):
     
     # 应用配置
     APP_NAME: str = "考勤系统"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "3.1.1"
     APP_DESCRIPTION: str = "一个简单的考勤系统后端API"
+
     # 应用启动时间
     START_TIME: float = START_TIME
         
@@ -98,6 +99,8 @@ class Settings(BaseSettings):
         ["17:04", "17:16", "17:32"],  # 第二个用户
         ["17:05", "17:17", "17:33"]   # 第三个用户
     ]
+
+    GIT_REPO: str = "https://github.com/chiupam/WorkClock.git"
     
     class Config:
         env_file = ".env"

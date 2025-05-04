@@ -1,13 +1,12 @@
+import httpx
 import sqlite3
 import time
-
-import httpx
 from fastapi import APIRouter, Response, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from app import logger, LOG_DB_FILE, USER_DB_FILE as DB_FILE, SET_DB_FILE
+from app import logger, USER_DB_FILE as DB_FILE, SET_DB_FILE
 from app.auth.utils import random_open_id, get_mobile_user_agent
 from app.utils.host import build_api_url
 from app.utils.log import log_login, log_operation, LogType

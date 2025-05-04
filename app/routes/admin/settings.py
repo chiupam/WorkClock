@@ -1,17 +1,15 @@
 import datetime
-import sqlite3
 import os
+import sqlite3
 import subprocess
-
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from app import SET_DB_FILE, logger
 from app.auth.dependencies import admin_required
-from app.routes.admin.utils import get_admin_stats, get_admin_name, templates
 from app.routes.admin.system import trigger_restart_after_setup
-from config import Settings
-from config import settings
+from app.routes.admin.utils import get_admin_stats, get_admin_name, templates
+from config import Settings, settings
 
 # 创建路由器
 router = APIRouter()
@@ -289,7 +287,7 @@ async def update_project_code(request: Request):
         if not os.path.exists(git_dir):
             # 仓库尚未克隆，执行git clone
             logger.info("仓库尚未克隆，执行克隆操作")
-            clone_cmd = "git clone https://github.com/chiupam/WorkClock.git repo"
+            clone_cmd = f"git clone {settings.GIT_REPO} repo"
             clone_result = subprocess.run(
                 clone_cmd,
                 shell=True,

@@ -1,6 +1,5 @@
 import datetime
 import sqlite3
-
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 

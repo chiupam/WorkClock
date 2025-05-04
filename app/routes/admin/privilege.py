@@ -1,21 +1,19 @@
 import calendar
 import datetime
-import sqlite3
-from typing import Optional
 import httpx
-
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from typing import Optional
 
-from app import USER_DB_FILE, SIGN_DB_FILE, logger, SET_DB_FILE
+from app import logger
 from app.auth.dependencies import admin_required
 from app.auth.utils import get_mobile_user_agent
 from app.routes.admin.utils import get_admin_stats, get_admin_name, templates
-from app.routes.statistics import GetYueTjList, get_Attendance_Statistics
-from app.utils.host import build_api_url
 from app.routes.index import get_attendance_info, show_sign_button
 from app.routes.sign import check_sign_time
+from app.routes.statistics import GetYueTjList, get_Attendance_Statistics
+from app.utils.host import build_api_url
 from app.utils.log import LogType, log_operation, log_sign_activity
 
 DEPARTMENTS = {

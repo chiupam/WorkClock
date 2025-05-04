@@ -8,7 +8,6 @@ from fastapi.templating import Jinja2Templates
 
 from app import SET_DB_FILE
 from app.routes.admin.system import trigger_restart_after_setup
-from config import Settings
 from config import settings
 
 # 创建路由器
