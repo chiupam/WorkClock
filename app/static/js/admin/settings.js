@@ -12,8 +12,12 @@ function loadSettings() {
                 const settings = response.data.settings;
 
                 // 填充表单
-                document.getElementById('system_name').value = settings.system_name ? settings.system_name.value : '';
-                document.getElementById('api_host').value = settings.api_host ? settings.api_host.value : '';
+                // system_name元素已在HTML中注释掉，不再尝试访问
+                // const systemNameEl = document.getElementById('system_name');
+                // if (systemNameEl) systemNameEl.value = settings.system_name ? settings.system_name.value : '';
+
+                const apiHostEl = document.getElementById('api_host');
+                if (apiHostEl) apiHostEl.value = settings.api_host ? settings.api_host.value : '';
                 // 密码字段不回显
             } else {
                 showAlert('danger', '加载设置失败: ' + response.data.message);
@@ -36,8 +40,9 @@ function saveSettings() {
 
     // 获取表单数据
     const formData = {
-        system_name: document.getElementById('system_name').value,
-        api_host: document.getElementById('api_host').value
+        // system_name已经在HTML中注释掉了，移除相关代码
+        // system_name: document.getElementById('system_name') ? document.getElementById('system_name').value : '',
+        api_host: document.getElementById('api_host') ? document.getElementById('api_host').value : ''
     };
 
     // 仅当密码不为空时才包含密码字段

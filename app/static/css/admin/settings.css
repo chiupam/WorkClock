@@ -55,7 +55,13 @@
     margin-top: 30px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
+    gap: 15px;
+}
+
+.main-actions {
+    display: flex;
     gap: 12px;
 }
 
@@ -162,19 +168,25 @@
     display: flex;
     align-items: center;
     background-color: #f8f9fa;
-    border-radius: 4px;
-    padding: 8px 12px;
-    margin-left: auto;
+    border-radius: 6px;
+    padding: 10px 16px;
     border: 1px solid #e9ecef;
+    gap: 20px;
 }
 
 .update-checkbox-label {
     display: flex;
     align-items: center;
     margin: 0;
-    margin-right: 15px;
     cursor: pointer;
     user-select: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.update-checkbox-label:hover {
+    background-color: #dee2e6;
 }
 
 .update-checkbox-label input[type="checkbox"] {
@@ -182,7 +194,7 @@
     width: 16px;
     height: 16px;
     margin: 0;
-    margin-right: 6px;
+    margin-right: 10px;
     cursor: pointer;
 }
 
@@ -191,24 +203,26 @@
     color: #495057;
 }
 
-/* 调整按钮组样式 */
-.form-actions {
-    margin-top: 30px;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
 @media (max-width: 768px) {
     .form-actions {
         flex-direction: column;
         align-items: stretch;
+        gap: 20px;
+    }
+
+    .main-actions {
+        width: 100%;
+        justify-content: space-between;
     }
 
     .update-options {
-        margin-left: 0;
-        margin-top: 10px;
-        justify-content: space-between;
+        width: 100%;
+        justify-content: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        font-size: 15px;
     }
 }

@@ -18,11 +18,11 @@
 
     <div class="settings-form">
         <form id="settings-form">
-            <div class="form-group">
+            <!-- <div class="form-group">
                 <label for="system_name" class="form-label">系统名称</label>
                 <input type="text" id="system_name" name="system_name" class="form-control" placeholder="考勤管理系统">
                 <small class="form-text">设置显示在页面标题和页脚的系统名称</small>
-            </div>
+            </div> -->
 
             <div class="form-group">
                 <label for="api_host" class="form-label">API主机地址</label>
@@ -45,8 +45,10 @@
             </div>
 
             <div class="form-actions">
-                <button type="button" onclick="resetForm()" class="btn btn-secondary">重置</button>
-                <button type="button" onclick="saveSettings()" class="btn btn-primary">保存设置</button>
+                <div class="main-actions">
+                    <button type="button" onclick="resetForm()" class="btn btn-secondary">重置</button>
+                    <button type="button" onclick="saveSettings()" class="btn btn-primary">保存设置</button>
+                </div>
                 <div class="update-options">
                     <button type="button" onclick="updateCode(event)" class="btn btn-warning">更新项目</button>
                     <label class="update-checkbox-label">

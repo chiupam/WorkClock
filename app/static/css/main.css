@@ -81,6 +81,13 @@ body {
   width: 100%;
 }
 
+.btn:disabled,
+.btn-disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .btn:hover {
   background-color: #1565c0;
 }
@@ -176,25 +183,29 @@ header p {
   width: auto;
 }
 
-.stats, .attendance-status {
+.stats,
+.attendance-status {
   display: flex;
   justify-content: space-around;
   margin-bottom: 20px;
 }
 
-.stat-item, .status-item {
+.stat-item,
+.status-item {
   text-align: center;
   padding: 10px;
 }
 
-.stat-value, .status-value {
+.stat-value,
+.status-value {
   display: block;
   font-size: 24px;
   font-weight: bold;
   color: var(--primary-color);
 }
 
-.stat-label, .status-label {
+.stat-label,
+.status-label {
   font-size: 14px;
   color: #666;
 }
@@ -223,19 +234,19 @@ footer {
     margin: 50px auto;
     padding: 20px;
   }
-  
+
   .dashboard-content {
     grid-template-columns: 1fr;
   }
-  
+
   header {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .user-info {
     margin-top: 10px;
     width: 100%;
     justify-content: space-between;
   }
-} 
+}

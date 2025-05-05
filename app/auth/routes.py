@@ -21,7 +21,7 @@ class UserLogin(BaseModel):
     phone: str
     password: str
 
-async def handle_admin_login(password: str):
+async def handle_admin_login(request: Request, password: str):
     """
     处理管理员登录
     
@@ -50,8 +50,8 @@ async def handle_admin_login(password: str):
             logger.warning("管理员登录失败: 密码错误")
             
             # 记录登录失败日志
-            await log_login("admin", "管理员", "127.0.0.1", False)
-            await log_operation("管理员", LogType.LOGIN, "管理员登录失败：密码错误", "127.0.0.1", False)
+            await log_login("admin", "管理员",request.client.host, False)
+            await log_operation("管理员", LogType.LOGIN, "管理员登录失败：密码错误", request.client.host, False)
             
             return JSONResponse(
                 status_code=401,
@@ -90,8 +90,8 @@ async def handle_admin_login(password: str):
         
         # 记录登录日志
         try:
-            await log_login("admin", "管理员", "127.0.0.1", True)
-            await log_operation("管理员", LogType.LOGIN, "管理员登录成功", "127.0.0.1", True)
+            await log_login("admin", "管理员", request.client.host, True)
+            await log_operation("管理员", LogType.LOGIN, "管理员登录成功", request.client.host, True)
         except Exception as e:
             logger.error(f"记录登录日志失败: {str(e)}")
         
@@ -114,7 +114,7 @@ async def handle_admin_login(password: str):
     except Exception as e:
         logger.error(f"管理员登录错误: {str(e)}")
         # 记录错误日志
-        await log_operation("管理员", LogType.LOGIN, f"管理员登录出错: {str(e)}", "127.0.0.1", False)
+        await log_operation("管理员", LogType.LOGIN, f"管理员登录出错: {str(e)}", request.client.host, False)
         return JSONResponse(
             status_code=500,
             content={"success": False, "message": f"登录失败: {str(e)}"}
@@ -265,7 +265,7 @@ async def login(
 
     # 检查是否是管理员登录尝试
     if login_phone == "admin":
-        return await handle_admin_login(login_password)
+        return await handle_admin_login(request, login_password)
     
     # 普通用户登录
     return await handle_user_login(request, login_phone, login_password)

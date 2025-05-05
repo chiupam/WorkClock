@@ -141,14 +141,16 @@ h2 {
   flex-grow: 1;
 }
 
-.time-info, .location-info {
+.time-info,
+.location-info {
   display: flex;
   align-items: center;
   margin: 5px 0;
   color: #666;
 }
 
-.time-icon, .location-icon {
+.time-icon,
+.location-icon {
   display: flex;
   align-items: center;
   margin-right: 10px;
@@ -215,13 +217,14 @@ h2 {
     transform: scale(1);
     opacity: 1;
   }
+
   100% {
     transform: scale(1.2);
     opacity: 0;
   }
 }
 
-.sign-button[style*="display: none"] + .attendance-list {
+.sign-button[style*="display: none"]+.attendance-list {
   margin-top: 0;
 }
 
@@ -359,8 +362,13 @@ h2 {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 加载指示器样式 */
@@ -390,8 +398,13 @@ h2 {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 添加考勤统计相关样式 */
@@ -773,7 +786,8 @@ h2 {
   justify-content: flex-end;
 }
 
-.save-button, .cancel-button {
+.save-button,
+.cancel-button {
   padding: 10px 24px;
   border-radius: 6px;
   border: none;
@@ -974,17 +988,17 @@ h2 {
   .time-grid {
     justify-content: center;
   }
-  
+
   .time-box {
     width: 70px;
     height: 36px;
     margin: 3px;
   }
-  
+
   .time-box span {
     font-size: 14px;
   }
-  
+
   .modal-body {
     padding: 15px;
   }
@@ -995,6 +1009,7 @@ h2 {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1005,6 +1020,7 @@ h2 {
     transform: translate(-50%, -60%);
     opacity: 0;
   }
+
   to {
     transform: translate(-50%, -50%);
     opacity: 1;
@@ -1033,4 +1049,4 @@ h2 {
   border-top: 2px solid #1890ff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}          
+}

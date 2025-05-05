@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     
     # 应用配置
     APP_NAME: str = "考勤系统"
-    APP_VERSION: str = "3.1.1"
+    APP_VERSION: str = "v1.0.0"
     APP_DESCRIPTION: str = "一个简单的考勤系统后端API"
 
     # 应用启动时间
@@ -119,6 +119,11 @@ class Settings(BaseSettings):
         
         # 从数据库获取FUCKDAKA密码（不再使用环境变量）
         self.FUCK_PASSWORD = get_setting_from_db("fuck_password")
+        
+        # 尝试从数据库获取版本号
+        db_version = get_setting_from_db("app_version")
+        if db_version:
+            self.APP_VERSION = db_version
         
         # 检查必要设置是否完成初始化
         self.IS_INITIALIZED = self._check_initialization()

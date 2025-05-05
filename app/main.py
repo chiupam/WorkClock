@@ -16,7 +16,10 @@ from app.routes import index, sign, statistics
 from app.routes.admin import router as admin_router
 from app.routes.setup import router as setup_router
 from app.utils.db_init import initialize_database
-from config import Settings
+from config import Settings, settings
+
+# 引入获取版本的函数，但尚未执行
+from app.routes.admin.utils import get_latest_github_tag
 
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -109,8 +112,18 @@ async def startup_db_client():
             os.makedirs(data_dir)
         # 初始化所有数据库
         initialize_database()
+        
+        # 只在项目启动时获取版本号一次，并全局更新
+        app_version = await get_latest_github_tag()
+        if app_version:
+            # 更新应用版本号 - 直接修改配置文件中的版本号
+            # 这样在整个应用中引用的都是同一个版本号
+            settings.APP_VERSION = app_version
+            # 更新 app 实例中的版本号
+            app.version = app_version
+            logger.info(f"应用版本号已设置为: {app_version}")
     except Exception as e:
-        logger.error(f"数据库初始化失败: {str(e)}")
+        logger.error(f"数据库初始化或版本号更新失败: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

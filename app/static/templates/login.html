@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,14 +18,31 @@
             font-weight: bold;
             display: none;
         }
-        
+
         .loading {
             display: none;
             text-align: center;
-            margin: 10px 0;
+            margin: 15px 0;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(30, 136, 229, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="login-container">
         <h1 class="login-title">考勤系统</h1>
@@ -39,10 +57,12 @@
             </div>
             <button type="submit" id="login-button" class="btn">登录</button>
         </form>
-        <div id="loading" class="loading">登录中，请稍候...</div>
-        <div id="error-message" class="error-message" {% if error_message %}style="display: block;"{% endif %}>
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+        </div>
+        <div id="error-message" class="error-message" {% if error_message %}style="display: block;" {% endif %}>
             {% if error_message %}
-                {{ error_message }}
+            {{ error_message }}
             {% endif %}
         </div>
     </div>
@@ -52,4 +72,5 @@
     <!-- 引入外部JavaScript文件 -->
     <script src="/static/js/login.js"></script>
 </body>
-</html> 
+
+</html>

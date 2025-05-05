@@ -18,7 +18,8 @@ a {
     color: inherit;
 }
 
-ul, ol {
+ul,
+ol {
     list-style: none;
 }
 
@@ -197,32 +198,41 @@ ul, ol {
         position: fixed;
         height: 100%;
         left: -240px;
+        /* 默认隐藏 */
         top: 0;
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s ease;
+        touch-action: none;
+        /* 防止触摸事件自动触发滚动 */
+        pointer-events: none;
+        /* 默认不接收任何点击事件 */
     }
-    
+
     .admin-layout.sidebar-collapsed .admin-sidebar {
         left: 0;
+        pointer-events: auto;
+        /* 显示时接收点击事件 */
     }
-    
+
     .admin-layout.sidebar-collapsed .sidebar-overlay {
         display: block;
     }
-    
+
+    /* 移除模糊效果，避免性能问题 */
     .admin-layout.sidebar-collapsed .admin-main {
-        filter: blur(3px);
-        opacity: 0.7;
+        opacity: 0.9;
         pointer-events: none;
+        /* 侧边栏打开时，主内容区域不接收点击 */
     }
-    
+
     .admin-header .sidebar-toggle.active span:first-child {
         transform: rotate(45deg) translate(5px, 5px);
     }
-    
+
     .admin-header .sidebar-toggle.active span:nth-child(2) {
         opacity: 0;
     }
-    
+
     .admin-header .sidebar-toggle.active span:last-child {
         transform: rotate(-45deg) translate(5px, -5px);
     }
@@ -232,7 +242,7 @@ ul, ol {
     .admin-content {
         padding: 15px;
     }
-    
+
     .admin-header {
         padding: 0 15px;
     }
@@ -268,7 +278,7 @@ table {
     border-collapse: collapse;
 }
 
-table th, 
+table th,
 table td {
     padding: 12px 15px;
     text-align: left;
@@ -377,4 +387,4 @@ table tbody tr:hover {
     background-color: #d1ecf1;
     color: #0c5460;
     border: 1px solid #bee5eb;
-} 
+}
