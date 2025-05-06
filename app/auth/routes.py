@@ -11,6 +11,8 @@ from app.auth.utils import random_open_id, get_mobile_user_agent
 from app.utils.host import build_api_url
 from app.utils.log import log_login, log_operation, LogType
 
+from config import settings
+
 # 创建路由器
 router = APIRouter(tags=["认证"])
 
@@ -328,7 +330,7 @@ async def wx_login(headers: dict, data: dict):
             else:
                 return None
     except Exception as e:
-        print(f"获取用户信息时发生异常: {str(e)}")
+        logger.error(f"获取用户信息时发生异常: {str(e)}")
         return None
 
 
@@ -340,7 +342,7 @@ async def get_user_info(headers: dict):
     try:
         async with httpx.AsyncClient() as client:
             api_url = build_api_url("/Apps/AppIndex")
-            params = {'UnitCode': '530114'}
+            params = {'UnitCode': settings.UNIT_CODE}
             api_response = await client.get(api_url, headers=headers, params=params)
             api_data = api_response.json()
             if api_data.get("success", False):
@@ -351,8 +353,8 @@ async def get_user_info(headers: dict):
                     user_info[field] = api_data.get(field, "")
                 return user_info
             else:
-                print(f"API请求成功但返回失败状态: {api_data.get('message', '未知错误')}")
+                logger.error(f"API请求成功但返回失败状态: {api_data.get('message', '未知错误')}")
                 return None
     except Exception as e:
-        print(f"获取用户信息时发生异常: {str(e)}")
+        logger.error(f"获取用户信息时发生异常: {str(e)}")
         return None

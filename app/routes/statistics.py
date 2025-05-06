@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from app.auth.dependencies import is_valid_open_id
 from app.auth.utils import get_mobile_user_agent
+from config import settings
 from app.utils.host import build_api_url
 
 router = APIRouter(tags=["考勤统计"])
@@ -195,7 +196,7 @@ async def get_Attendance_Statistics(headers: dict, user_id: int, year: str, mont
     """
     
     api_url = build_api_url("/AttendanceCard/get_Attendance_Statistics")
-    data = {"UnitCode": "530114", "UserID": user_id, "SetClass": "1", "Mid": "134", "QueryType": "2"}
+    data = {"UnitCode": settings.UNIT_CODE, "UserID": user_id, "SetClass": "1", "Mid": "134", "QueryType": "2"}
     data = {**data, "Syear": f"{year}年", "Smonth": f"{month}月"}
 
     # 重试次数
@@ -257,7 +258,7 @@ async def GetYueTjList(headers: dict, user_id: int, year: str, month: str) -> Li
     """
 
     api_url = build_api_url("/AttendanceCard/GetYueTjList")
-    params = {"AttType": "1", "UnitCode": "530114", "userid": user_id, "Mid": "134"}
+    params = {"AttType": "1", "UnitCode": settings.UNIT_CODE, "userid": user_id, "Mid": "134"}
     params = {**params, "year": f"{year}年", "month": f"{month}月"}
 
     # 重试次数

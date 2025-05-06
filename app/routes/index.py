@@ -56,7 +56,6 @@ async def root(request: Request, open_id: Optional[str] = Cookie(None)):
         else:
             # 工作日，需要打卡，需要进行请求打卡数据，显示签到按钮
             attendance_data = await get_attendance_info(request.headers.get('User-Agent'), user_info.get("user_id"))
-            print(attendance_data)
             show_sign_btn = show_sign_button(attendance_data)
 
         # 登录成功，返回index.html
@@ -107,7 +106,7 @@ async def get_attendance_info(ua: str, user_id: int):
         # 构建API URL
         api_url = build_api_url('/AttendanceCard/GetAttCheckinoutList')
         headers = {'User-Agent': ua}
-        params = {"AttType": "1", "UnitCode": "530114", "userid": user_id, "Mid": "134"}
+        params = {"AttType": "1", "UnitCode": settings.UNIT_CODE, "userid": user_id, "Mid": "134"}
 
         # 使用httpx发送GET请求
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -154,8 +153,7 @@ async def check_is_workday(ua: str, user_id: int):
         now = datetime.datetime.now()
 
         api_url = build_api_url('/AttendanceCard/GetYueTjList')
-        headers = {'User-Agent': ua}
-        params = {"AttType": "1", "UnitCode": "530114", "userid": user_id, "Mid": "134"}
+        params = {"AttType": "1", "UnitCode": settings.UNIT_CODE, "userid": user_id, "Mid": "134"}
         params = {**params, "year": f"{now.year}年", "month": f"{str(now.month).zfill(2)}月"}
 
         # 使用httpx发送GET请求

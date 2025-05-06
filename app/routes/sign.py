@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from app.auth.dependencies import is_valid_open_id
 from app.auth.utils import get_mobile_user_agent
+from config import settings
 from app.utils.host import build_api_url
 from app.utils.log import log_sign_activity, log_operation, LogType
 
@@ -146,7 +147,7 @@ async def SaveAttCheckinout(request: Request, open_id: str):
 
     api_url = build_api_url("/AttendanceCard/SaveAttCheckinout")
     headers = {"User-Agent": get_mobile_user_agent(request.headers.get("User-Agent", ""))}
-    data = {"model": {"Aid": 0, "UnitCode": "530114", "userID": user_id, "userDepID": dep_id, "Mid": 134, "Num_RunID": 14, "lng": "", "lat": "", "realaddress": "呈贡区人民检察院", "iSDelete": 0, "administratorChangesRemark": "呈贡区人民检察院"}, "AttType": 1}
+    data = {"model": {"Aid": 0, "UnitCode": settings.UNIT_CODE, "userID": user_id, "userDepID": dep_id, "Mid": 134, "Num_RunID": 14, "lng": "", "lat": "", "realaddress": settings.REAL_ADDRESS, "iSDelete": 0, "administratorChangesRemark": settings.REAL_ADDRESS}, "AttType": 1}
     
     # 实际环境中解除注释，返回真实API响应
     async with httpx.AsyncClient() as client:

@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     API_HOST: Optional[str] = None
     API_URL: Optional[str] = None
     
+    # 打卡配置 - 从数据库获取
+    UNIT_CODE: Optional[str] = None
+    REAL_ADDRESS: Optional[str] = None
+    
     # 日志配置
     LOG_LEVEL: Optional[str] = "INFO"  # 默认INFO级别
     
@@ -120,6 +124,12 @@ class Settings(BaseSettings):
         # 从数据库获取FUCKDAKA密码（不再使用环境变量）
         self.FUCK_PASSWORD = get_setting_from_db("fuck_password")
         
+        # 从数据库获取UNIT_CODE
+        self.UNIT_CODE = get_setting_from_db("unit_code")
+        
+        # 从数据库获取REAL_ADDRESS
+        self.REAL_ADDRESS = get_setting_from_db("real_address")
+        
         # 尝试从数据库获取版本号
         db_version = get_setting_from_db("app_version")
         if db_version:
@@ -127,6 +137,7 @@ class Settings(BaseSettings):
         
         # 检查必要设置是否完成初始化
         self.IS_INITIALIZED = self._check_initialization()
+        print(self.IS_INITIALIZED)
         
         # 设置日志级别 - 无论环境都使用INFO级别，简化逻辑
         self.LOG_LEVEL = "INFO"
@@ -149,7 +160,7 @@ class Settings(BaseSettings):
     def _check_initialization(self):
         """检查系统是否已经初始化"""
         # 检查从数据库读取的关键配置是否已设置
-        return bool(self.API_HOST and self.ADMIN_PASSWORD and self.FUCK_PASSWORD)
+        return bool(self.API_HOST and self.ADMIN_PASSWORD and self.FUCK_PASSWORD and self.UNIT_CODE and self.REAL_ADDRESS)
 
 # 创建配置实例
 settings = Settings()

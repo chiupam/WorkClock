@@ -46,7 +46,7 @@ async def process_setup(request: Request):
         data = await request.json()
         
         # 验证必填字段
-        required_fields = ["api_host", "admin_password", "admin_password_confirm", "fuck_password"]
+        required_fields = ["api_host", "admin_password", "admin_password_confirm", "fuck_password", "unit_code", "real_address"]
         for field in required_fields:
             if field not in data or not data[field]:
                 return {"success": False, "message": f"缺少必填字段: {field}"}
@@ -69,11 +69,11 @@ async def process_setup(request: Request):
         current_time = datetime.datetime.now().timestamp()
         
         # 只处理允许的字段
-        allowed_fields = ["api_host", "admin_password", "fuck_password"]
+        allowed_fields = ["api_host", "admin_password", "fuck_password", "unit_code", "real_address"]
         for key in allowed_fields:
             if key in data:
                 cursor.execute(
-                    "INSERT OR REPLACE INTO system_settings (setting_key, setting_value, updated_at, is_initialized) VALUES (?, ?, ?, 1)",
+                    "INSERT OR REPLACE INTO system_settings (setting_key, setting_value, updated_at) VALUES (?, ?, ?)",
                     (key, data[key], current_time)
                 )
         

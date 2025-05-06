@@ -100,31 +100,42 @@ async def update_settings(request: Request):
         # 连接数据库
         conn = sqlite3.connect(SET_DB_FILE)
         cursor = conn.cursor()
-        
-        # 更新设置
+
+        # 当前时间戳
         current_time = datetime.datetime.now().timestamp()
-        
+
         # 允许更新的字段
-        allowed_fields = ["api_host", "admin_password", "fuck_password", "system_name"]
+        allowed_fields = ["api_host", "admin_password", "fuck_password", "system_name", "unit_code", "real_address"]
         updated = False
-        
+
         for key in data:
             if key in allowed_fields and data[key]:
                 # 密码字段验证长度
                 if key.endswith("_password") and len(data[key]) < 6:
                     logger.warning(f"密码长度不足: {key}")
+                    conn.close()
                     return JSONResponse({
-                        "success": False, 
+                        "success": False,
                         "message": f"{key}长度不能少于6个字符"
                     })
+
+                logger.info(f"更新或插入设置: {key}")
                 
-                logger.info(f"更新设置: {key}")
+                # 尝试更新
                 cursor.execute(
                     "UPDATE system_settings SET setting_value = ?, updated_at = ? WHERE setting_key = ?",
                     (data[key], current_time, key)
                 )
+                
+                # 如果没有行被更新，则插入
+                if cursor.rowcount == 0:
+                    cursor.execute(
+                        "INSERT INTO system_settings (setting_key, setting_value, updated_at) VALUES (?, ?, ?)",
+                        (key, data[key], current_time)
+                    )
+
                 updated = True
-        
+
         conn.commit()
         conn.close()
         

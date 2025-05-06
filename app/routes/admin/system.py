@@ -2,6 +2,7 @@ import subprocess
 import time  # 添加time模块
 
 from fastapi import APIRouter
+from app import logger
 
 router = APIRouter(prefix="/system", tags=["系统"])
 
@@ -29,16 +30,16 @@ async def check_service_ready(port=8000, max_retries=5, retry_interval=1):
             sock.close()
             
             if result == 0:
-                print(f"服务在端口 {port} 已就绪")
+                logger.info(f"服务在端口 {port} 已就绪")
                 return True
             else:
-                print(f"重试 {i+1}/{max_retries}: 服务在端口 {port} 未就绪，等待 {retry_interval} 秒...")
+                logger.warning(f"重试 {i+1}/{max_retries}: 服务在端口 {port} 未就绪，等待 {retry_interval} 秒...")
                 time.sleep(retry_interval)
         except Exception as e:
-            print(f"检查服务就绪状态时发生错误: {str(e)}")
+            logger.error(f"检查服务就绪状态时发生错误: {str(e)}")
             time.sleep(retry_interval)
     
-    print(f"服务在端口 {port} 未能在 {max_retries * retry_interval} 秒内就绪")
+    logger.error(f"服务在端口 {port} 未能在 {max_retries * retry_interval} 秒内就绪")
     return False
 
 # 内部函数，用于重启应用
@@ -67,7 +68,7 @@ async def _restart_application():
                     # 移除引号和逗号
                     app_name = app_name_part.replace('"', '').replace("'", "").replace(',', '').strip()
                 except Exception as e:
-                    print(f"提取应用名失败: {str(e)}")
+                    logger.error(f"提取应用名失败: {str(e)}")
         
         # 首先检查应用是否已经运行
         status_check = subprocess.run(
@@ -80,7 +81,7 @@ async def _restart_application():
         stdout = status_check.stdout.decode('utf-8').strip()
         
         if "not_found" in stdout:
-            print(f"应用 {app_name} 未运行，执行启动操作")
+            logger.warning(f"应用 {app_name} 未运行，执行启动操作")
             # 应用未运行，执行启动
             result = subprocess.run(
                 "pm2 start ecosystem.config.js", 
@@ -118,7 +119,7 @@ async def _restart_application():
             "is_ready": is_ready
         }
     except Exception as e:
-        print(f"重启失败，错误: {str(e)}")
+        logger.error(f"重启失败，错误: {str(e)}")
         return {
             "success": False, 
             "message": f"重启请求失败: {str(e)}",

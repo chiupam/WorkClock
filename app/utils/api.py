@@ -2,6 +2,7 @@ import httpx
 from fastapi import Response
 from app.utils.host import build_api_url
 from app import logger
+from config import settings
 
 
 async def wx_login(headers: dict, data: dict):
@@ -31,7 +32,7 @@ async def get_user_info(headers: dict):
     """
     
     api_url = build_api_url("/Apps/AppIndex")
-    params = {'UnitCode': '530114'}
+    params = {'UnitCode': settings.UNIT_CODE}
     
     try:
         async with httpx.AsyncClient() as client:
@@ -67,7 +68,7 @@ async def get_attendance_info(headers: dict, user_id: int) -> Response | None:
     """
 
     api_url = build_api_url('/AttendanceCard/GetAttCheckinoutList')
-    data = {"AttType": "1", "UnitCode": "530114", "userid": user_id, "Mid": "134"}
+    data = {"AttType": "1", "UnitCode": settings.UNIT_CODE, "userid": user_id, "Mid": "134"}
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:

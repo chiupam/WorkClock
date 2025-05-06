@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,48 +8,65 @@
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/css/setup.css">
 </head>
+
 <body>
     <div class="setup-container">
         <div class="setup-header">
             <h1>系统初始化设置</h1>
             <p>首次使用需要进行系统配置</p>
         </div>
-        
+
         <form id="setup-form">
             <div class="form-group">
                 <label for="api_host">API主机地址</label>
-                <input type="text" id="api_host" name="api_host" placeholder="例如: api.example.com 或 192.168.1.100:8000" required>
+                <input type="text" id="api_host" name="api_host" placeholder="例如: api.example.com 或 192.168.1.100:8000"
+                    required>
                 <div class="help-text">输入您的API服务器地址，不需要加http://前缀</div>
                 <div class="error-message" id="api_host_error"></div>
             </div>
-            
+
+            <div class="form-group">
+                <label for="unit_code">单位代码</label>
+                <input type="text" id="unit_code" name="unit_code" placeholder="填写打卡接口所需的单位代码" required>
+                <div class="help-text">打卡系统所需的单位标识码</div>
+                <div class="error-message" id="unit_code_error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="real_address">打卡地址</label>
+                <input type="text" id="real_address" name="real_address" placeholder="填写显示的打卡地址" required>
+                <div class="help-text">打卡时显示的地址信息</div>
+                <div class="error-message" id="real_address_error"></div>
+            </div>
+
             <div class="form-group">
                 <label for="admin_password">管理员密码</label>
                 <input type="password" id="admin_password" name="admin_password" placeholder="设置管理员登录密码" required>
                 <div class="help-text">用于管理员登录的密码，请设置足够复杂的密码</div>
                 <div class="error-message" id="admin_password_error"></div>
             </div>
-            
+
             <div class="form-group">
                 <label for="admin_password_confirm">确认管理员密码</label>
                 <input type="password" id="admin_password_confirm" placeholder="再次输入管理员密码" required>
                 <div class="error-message" id="admin_password_confirm_error"></div>
             </div>
-            
+
             <div class="form-group">
                 <label for="fuck_password">FuckDaka密码</label>
                 <input type="password" id="fuck_password" name="fuck_password" placeholder="设置FuckDaka功能密码" required>
                 <div class="help-text">用于特殊打卡功能的密码</div>
                 <div class="error-message" id="fuck_password_error"></div>
             </div>
-            
+
             <button type="submit" class="submit-btn" id="submit-btn">完成设置</button>
         </form>
-        
+
         <div class="message success-message" id="success-message"></div>
         <div class="message error-message" id="error-message"></div>
     </div>
-    
+
     <script src="/static/js/setup.js"></script>
 </body>
-</html> 
+
+</html>

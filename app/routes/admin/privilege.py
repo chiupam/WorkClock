@@ -15,6 +15,7 @@ from app.routes.sign import check_sign_time
 from app.routes.statistics import GetYueTjList, get_Attendance_Statistics
 from app.utils.host import build_api_url
 from app.utils.log import LogType, log_operation, log_sign_activity
+from config import settings
 
 DEPARTMENTS = {
     "3": "院领导",
@@ -88,7 +89,7 @@ async def admin_embed_user(request: Request):
         # 从真实服务器获取用户信息
         api_url = build_api_url('/Apps/getUserInfo')
         headers = {'User-Agent': get_mobile_user_agent(request.headers.get('User-Agent'))}
-        data = {"userid": user_id, "unitcode": "530114"}
+        data = {"userid": user_id, "unitcode": settings.UNIT_CODE}
         
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.post(api_url, headers=headers, json=data)
@@ -199,7 +200,7 @@ async def post_department_users(request: Request):
         # 向真实服务器发送请求获取部门用户列表
         api_url = build_api_url('/Apps/getUserInfoList')
         headers = {'User-Agent': get_mobile_user_agent(request.headers.get('User-Agent'))}
-        data = {"depid": department_id, "unitcode": "530114"}
+        data = {"depid": department_id, "unitcode": settings.UNIT_CODE}
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.post(api_url, headers=headers, json=data)
             users = [{key: item[key] for key in {'userid', 'username'} if key in item} for item in response.json()]
@@ -342,7 +343,7 @@ async def post_user_embed_sign(request: Request):
 
         api_url = build_api_url("/AttendanceCard/SaveAttCheckinout")
         headers = {"User-Agent": get_mobile_user_agent(request.headers.get("User-Agent", ""))}
-        data = {"model": {"Aid": 0, "UnitCode": "530114", "userID": user_id, "userDepID": dep_id, "Mid": 134, "Num_RunID": 14, "lng": "", "lat": "", "realaddress": "呈贡区人民检察院", "iSDelete": 0, "administratorChangesRemark": "呈贡区人民检察院"}, "AttType": 1}
+        data = {"model": {"Aid": 0, "UnitCode": settings.UNIT_CODE, "userID": user_id, "userDepID": dep_id, "Mid": 134, "Num_RunID": 14, "lng": "", "lat": "", "realaddress": "", "iSDelete": 0, "administratorChangesRemark": settings.REAL_ADDRESS}, "AttType": 1}
         
         async with httpx.AsyncClient() as client:
             response = await client.post(api_url, json=data, headers=headers)

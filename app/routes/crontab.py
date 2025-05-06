@@ -1,6 +1,7 @@
 import ast
 import asyncio
 import datetime
+import random
 import httpx
 import sqlite3
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -77,7 +78,7 @@ def get_user_info(user_id: str):
         return result
         
     except Exception as e:
-        print(f"获取用户信息失败: {str(e)}")
+        logger.error(f"获取用户信息失败: {str(e)}")
         return None
 
 
@@ -132,19 +133,23 @@ async def auto_sign(user_id: str):
         data = {
             "model": {
                 "Aid": 0,
-                "UnitCode": "530114",
+                "UnitCode": settings.UNIT_CODE,
                 "userID": user_id,
                 "userDepID": dep_id,
                 "Mid": 134,
                 "Num_RunID": 14,
                 "lng": "",
                 "lat": "",
-                "realaddress": "呈贡区人民检察院",
+                "realaddress": settings.REAL_ADDRESS,
                 "iSDelete": 0,
-                "administratorChangesRemark": "呈贡区人民检察院"
+                "administratorChangesRemark": settings.REAL_ADDRESS
             },
             "AttType": 1
         }
+
+        # 异步随机等待10到40秒
+        await asyncio.sleep(random.randint(10, 40))
+
         # 实际环境中解除注释，返回真实API响应
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json=data, headers=headers)
